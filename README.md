@@ -1,21 +1,12 @@
 # Hashiwokakero
 
-This script exits to quickly solve Hashiwokakero puzzles, and demonstrate 
-how the Hashiwokakero logic gates I've made work. To use, run the script 
-and then execute commands in the console. The main console commands worth 
-knowing are:
+This project is a demonstration of the fact that the puzzle Hashiwokakero (https://en.wikipedia.org/wiki/Hashiwokakero) is Turing Complete.
+
+This python script exits to quickly solve Hashiwokakero puzzles, and demonstrate how the Hashiwokakero logic gates I've made work. To use, run the script and then execute commands in the console. The main console commands worth knowing are:
     
 gates[channel][name].solve(inputs:str, show:bool, prints:bool) -> str: 
 
-This command solves a specific gate for specific inputs. The inputs 
-and outputs are binary strings (ex. '0110'). When the 'show' control 
-is True, the gate is displayed after it is solved ('show' defaults 
-to False). When the 'prints' control is True, the gate prints 
-whether the puzzle was solved or not, if there was an error, and 
-what the maximum recursion depth of the solver was ('prints' defaults 
-to False). Finally, 'channel' is either 1 or 2, and 'name' is the 
-name of the gate you want to use (valid options are presented below).
-For example:
+This command solves a specific gate for specific inputs. The inputs and outputs are binary strings (ex. '0110'). When the 'show' control is True, the gate is displayed after it is solved ('show' defaults to False). When the 'prints' control is True, the gate prints whether the puzzle was solved or not, if there was an error, and what the maximum recursion depth of the solver was ('prints' defaults to False). Finally, 'channel' is either 1 or 2, and 'name' is thename of the gate you want to use (valid options are presented below). For example:
 
     In [x]: gates[2]['or'].solve('01', True)
 
@@ -45,12 +36,7 @@ For example:
 
 truthTable(gate, channel:int) -> None:
 
-This command prints a truth table for a given gate. 'gate' can be 
-the name of a gate as a string (ex: 'half adder') in which case you 
-might need to specify the number of channels ('channel' defaults to 2).
-Alternatively, 'gate' can be a Hashiwokakero puzzle object (usually 
-from the 'gates' dictionary: ex. gates[1]['conditional swap']).
-For example:
+This command prints a truth table for a given gate. 'gate' can be the name of a gate as a string (ex: 'half adder') in which case you might need to specify the number of channels ('channel' defaults to 2). Alternatively, 'gate' can be a Hashiwokakero puzzle object (usually from the 'gates' dictionary: ex. gates[1]['conditional swap']). For example:
 
     In [x]: truthTable('buffered nand')
 
@@ -64,10 +50,7 @@ For example:
 
 timeGate(gate, N:int, channel:int, Print:bool, Return:bool) :
 
-This command solves the puzzle N times for each unique set of inputs. 
-It then either prints a table of the results, or it returns the raw 
-data (or both). 'gate' and 'channel' serve to fetch gates the same 
-way they do for truthTable(). For example:
+This command solves the puzzle N times for each unique set of inputs. It then either prints a table of the results, or it returns the raw data (or both). 'gate' and 'channel' serve to fetch gates the same way they do for truthTable(). For example:
 
     In [x]: timeGate('swap')
 
@@ -79,19 +62,12 @@ way they do for truthTable(). For example:
 
     Average Solve Time: 1.0 ± 0.2 ms
 
-Notably, uncertainties are uncertainties on the mean, not the standard 
-deviation you expect for any given measurement. To compute the 
-measurement-wise standard deviation multiple the uncertainty on the 
-mean by sqrt(N).
+Notably, uncertainties are uncertainties on the mean, not the standard deviation you expect for any given measurement. To compute the measurement-wise standard deviation multiple the uncertainty on the mean by sqrt(N).
 
 
 analyze(N:int, Return:bool) :
 
-This command times every gate in the 'gates' dictionary (including 
-older versions of gates), and then plots the average solve times 
-by the number of vertices, edges, and bridges in each puzzle. N 
-is fed to timeGate(), and the data is returned when 'Return' is True.
-For example:
+This command times every gate in the 'gates' dictionary (including older versions of gates), and then plots the average solve times by the number of vertices, edges, and bridges in each puzzle. N is fed to timeGate(), and the data is returned when 'Return' is True. For example:
 
     In [x]: analyze(100)
 
