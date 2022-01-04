@@ -1,7 +1,5 @@
 # Hashiwokakero
 
-"""
-Created on Sun Nov 28 11:08:53 2021
 This script exits to quickly solve Hashiwokakero puzzles, and demonstrate 
 how the Hashiwokakero logic gates I've made work. To use, run the script 
 and then execute commands in the console. The main console commands worth 
@@ -197,5 +195,5 @@ compliment - top*****       : (X, Cin) -> (X')
         subtract(x, y) uses the 8-bit compliment circuit and the 8-bit 
         adder circuits to compute (x - y). Although it it's a single puzzle, 
         it is fun to be able to both add and subtract numbers!
+
 @author: Violet Saathoff
-"""
