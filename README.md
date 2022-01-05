@@ -1,6 +1,106 @@
 # Hashiwokakero
 
+## Overview
 This project is a demonstration of the fact that the puzzle Hashiwokakero (https://en.wikipedia.org/wiki/Hashiwokakero) is Turing Complete.
+
+Data is encoded as edges which have either a single bridge (false) or a double bridge (true). Notably, since (1 + 2) = (2 + 1) = 3, data can be notted using a 3. This also allows for the creationg of bendable wires. For example: 
+    
+    As a NOT gate (F = false, T = true):
+    
+    F - 3 = T
+    
+    T = 3 - F
+    
+    
+    As a Bendable Wire (I = input, O = output):
+    
+            3 - O
+    I - 3   |
+        |   |
+        3 - 3
+
+Inputs and outputs are achieved by specifying particular edges as either inputs or outputs. Since each edge has 2 ends, this will always generate 2 copies of each input (and means that each output needs to be calculated twice. In my circuits I position my inputs along the left of the puzzle and my outputs along the right. For example, here is a circuit with 1 input/output that is a unitary logic function (forced bridges are already added):
+
+        2       2
+        ‖       ‖
+    2 = 8 ===== 8 = 2
+        ‖       ‖
+    3 - 7 ----- 7 - 3
+    |   ‖       ‖   |
+    In  6 ===== 6  Out
+    |   ‖       ‖   |
+    3 - 7 ----- 7 - 3
+        ‖       ‖
+    2 = 8 ===== 8 = 2
+        ‖       ‖
+        2       2
+ 
+Note that the 7's act as 3's since the 8's/6's force there to be 4 additional bridges connected to the 7 which don't transmit data, leaving 3 bridges which do connect to the 7 to transmit data. Also, the double-bridge structure is very useful because structures like it can be used to force the puzzle to be fully connected when it otherwise might not be, and it can be used to block communication between vertices which could otherwise talk to each other (an example of blocked communication is the 6's in the puzzle above, which block vertical communication between the 7's). 
+
+The most important building block for making logic gates is what I refer to as a "switch block", or an "if/else block". The basic idea behind this is to leverage the fact that bridges are not allowed to cross to create a structure that controls how data from one input flows based on the truth value of another input. To do this I convert the 2/1 logic levels to 0/1 logic levels using a 2. For example: 
+
+    T = 2   2 = T
+    
+    F - 2 - 2 - F
+
+For the time being please ignore the fact that these puzzles are not fully connected (this will be fixed later with the cage structure). Note how the edge between the 2's allows vertical bridges to pass through it when the input is true, but not when the input is false. On it's own, this isn't particularly useful since the bridge which would have passed through the if gate still needs to connect somewhere. To get around this I added a NOT gate followed by a perpendicular if gate (note that since the logic levels are currently 0/1 instead of 2/1, a NOT gate is a 1 instead of a 3).
+
+    I - 2   1
+          X
+            2 - 3 - O
+ 
+ In this circuit, the data from X will propagate upwards when the input is true, and to the right when the input is false (also, note that the output is equal to the input). 
+ 
+ The easiest circuit where this is useful is a wire splitter. The basic building block of the wire splitter is:
+ 
+          2 --- 3 - O
+    I - 2   1
+          1   2 - O
+            2 - 3 - O
+ 
+ The solutions to this are:
+ 
+          2 === 3 - F
+    F - 2 - 1
+          1 - 2 - F
+            2 = 3 - F
+ 
+          2 --- 3 = T
+    T = 2 | 1
+          1 | 2 = T
+            2 - 3 = T
+ 
+ Although I often use this as a building block within a larger puzzle, it can be used directly as a wire splitter like:
+ 
+        2           2           ||           2           2           ||           2           2    
+        ‖           ‖           ||           ‖           ‖           ||           ‖           ‖    
+    2 = 8 ========= 8 = 2       ||       2 = 8 ========= 8 = 2       ||       2 = 8 ========= 8 = 2
+        ‖           ‖           ||           ‖           ‖           ||           ‖           ‖    
+    3 - 7 --------- 7 - 3       ||       3 = 7 --------- 7 = 3       ||       3 - 7 ========= 7 - 3
+    |   ‖ 2 --- 3   ‖   |       ||       |   ‖ 2 --- 3   ‖   |       ||       ‖   ‖ 2 === 3   ‖   ‖
+    |   4       |   4   |       ||       |   4 |     ‖   4   |       ||       ‖   4       |   4   ‖
+    |   ‖     2 |   ‖   |       ||       |   ‖ |   2 ‖   ‖   |       ||       ‖   ‖     2 |   ‖   ‖
+    3 - 6   1 ‖ 3 - 7 - 3       ||       3 = 6 | 1 ‖ 3 - 7 = 3       ||       3 - 6 - 1 ‖ 3 = 7 - 3
+        ‖     ‖     ‖           ||           ‖ | | ‖     ‖           ||           ‖     ‖     ‖    
+        ‖     4 === 8 = 2       ||           ‖ | | 4 === 8 = 2       ||           ‖     4 === 8 = 2
+        ‖           ‖           ||           ‖ | |       ‖           ||           ‖           ‖    
+        ‖ 1         6 - 3       ||           ‖ 1 |       6 - 3       ||           ‖ 1 ------- 6 - 3
+        ‖           ‖   |       ||           ‖   |       ‖   |       ||           ‖           ‖   ‖
+        ‖       2 = 6   |       ||           ‖   |   2 = 6   |       ||           ‖       2 = 6   ‖
+        ‖           ‖   |       ||           ‖   |       ‖   |       ||           ‖           ‖   ‖
+        ‖   2 ----- 7 - 3       ||           ‖   2 ----- 7 = 3       ||           ‖   2 ===== 7 - 3
+        ‖           ‖           ||           ‖           ‖           ||           ‖           ‖    
+    2 = 8 ========= 8 = 2       ||       2 = 8 ========= 8 = 2       ||       2 = 8 ========= 8 = 2
+        ‖           ‖           ||           ‖           ‖           ||           ‖           ‖    
+        2           2           ||           2           2           ||           2           2    
+
+
+
+## Excel
+
+The Excel file contains all of the annotated logic gates and circuits. Although each logic function has a separate sheet within the Excel file, there are often multiple versions of each gate (and sometimes versions which use unpaired inputs/outputs). The flow of data through a circuit is mapped using colored lines, and there are comments where necessary to help explain how things work.
+
+## Python
 
 This python script exits to quickly solve Hashiwokakero puzzles, and demonstrate how the Hashiwokakero logic gates I've made work. To use, run the script and then execute commands in the console. The main console commands worth knowing are:
     
