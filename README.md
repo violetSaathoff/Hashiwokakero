@@ -16,7 +16,7 @@ This command solves a specific gate for specific inputs. The inputs and outputs 
         ‖                         ‖    
     3 = 7 ------------- 3         ‖    
     |   ‖               ‖         ‖    
-    F = 8 === 4 = 2     ‖         ‖    
+    |   6 === 4 = 2     ‖         ‖    
     |   ‖               ‖         ‖    
     3 = 7 - 2 ----- 1   ‖         ‖    
         ‖               2         ‖    
@@ -24,7 +24,7 @@ This command solves a specific gate for specific inputs. The inputs and outputs 
         ‖     |   2         2 |   ‖    
     3 - 7 = 2 | 1 ‖ 2 = 4   ‖ 3 = 7 - 3
     ‖   ‖     | | ‖     ‖   ‖     ‖   ‖
-    T = 8 === 3 | 4 === 8 = 7 === 8 = T
+    ‖   6 === 3 | 4 === 8 = 7 === 6   ‖
     ‖   ‖       |       ‖   |     ‖   ‖
     3 - 7 = 3 - 2       2   3 === 7 - 3
         ‖                         ‖    
