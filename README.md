@@ -5,11 +5,11 @@ This project is a demonstration of the fact that the puzzle Hashiwokakero (https
 
 Data is encoded as edges which have either a single bridge (false) or a double bridge (true). Notably, since (1 + 2) = (2 + 1) = 3, data can be notted using a 3. This also allows for the creationg of bendable wires. For example: 
     
-    As a NOT gate (F = false, T = true):
+    As a NOT gate (I = input, O = output, F = false, T = true):
     
     I - 3 - O       ||       F - 3 = T       ||       T - 3 - F
     
-    As a Bendable Wire (I = input, O = output):
+    As a Bendable Wire:
     
             3 - O       ||               3 - F       ||               3 = T
     I - 3   |           ||       F - 3   ‖           ||       T = 3   |    
@@ -38,15 +38,13 @@ The left panel is a trivial buffer, and the right panel is a NOT gate. Note that
 
 The most important building block for making logic gates is what I refer to as a "switch block", or an "if/else block". The basic idea behind this is to leverage the fact that bridges are not allowed to cross to create a structure that controls how data from one input flows based on the truth value of another input. To do this I convert the 2/1 logic levels to 0/1 logic levels using a 2. For example: 
 
-    T = 2   2 = T
-    
-    F - 2 - 2 - F
+    I - 2   2 - O       ||       F - 2 - 2 - F       ||       T = 2   2 = T
 
 For the time being please ignore the fact that these puzzles are not fully connected (this will be fixed later with the cage structure). Note how the edge between the 2's allows vertical bridges to pass through it when the input is true, but not when the input is false. On it's own, this isn't particularly useful since the bridge which would have passed through the if gate still needs to connect somewhere. To get around this I added a NOT gate followed by a perpendicular if gate (note that since the logic levels are currently 0/1 instead of 2/1, a NOT gate is a 1 instead of a 3).
 
-    I - 2   1
-          X
-            2 - 3 - O
+    I - 2   1               ||       F - 2 - 1               ||       T = 2   1
+          X                 ||             X                 ||             X |
+            2 - 3 - O       ||               2 = 3 - F       ||               2 - 3 = T
  
  In this circuit, the data from X will propagate upwards when the input is true, and to the right when the input is false (also, note that the output is equal to the input). 
  
@@ -57,7 +55,7 @@ For the time being please ignore the fact that these puzzles are not fully conne
           1   2 - O         ||             1 - 2 - F         ||             1 | 2 = T  
             2 - 3 - O       ||               2 = 3 - F       ||               2 - 3 = T
  
-The left panel is the gate without an input set and forced bridges solved, the middle panel is the split element solved when the input is true, and the right panel is the split element solved when the input is false. Although I often use this as a building block within a larger puzzle, it can be used directly as a wire splitter like:
+Although I often use this as a building block within a larger puzzle, it can be used directly as a wire splitter like:
  
         2           2           ||           2           2           ||           2           2    
         ‖           ‖           ||           ‖           ‖           ||           ‖           ‖    
@@ -81,8 +79,6 @@ The left panel is the gate without an input set and forced bridges solved, the m
         ‖           ‖           ||           ‖           ‖           ||           ‖           ‖    
         2           2           ||           2           2           ||           2           2    
 
-The left panel is the gate without an input selected with forced bridges solved, the middle panel is the gate solved when the input is false (both outputs are false), and the right panel is the gate solved when the input is true (both outputs are true).
-
 The ability to split wires can also be used to create a non-trivial buffer, which can be used to protect circuits from propagating indeterminate logic:
 
         2     2           ||           2     2           ||           2     2    
@@ -100,7 +96,7 @@ The ability to split wires can also be used to create a non-trivial buffer, whic
         ‖     ‖           ||           ‖     ‖           ||           ‖     ‖    
         2     2           ||           2     2           ||           2     2    
 
-The left panel is the circuit with forced bridges solved, the middle panel is the gate solved when the input is false, and the right panel is the gate solved when the input is true. Since the input is terminated, the 2 halves of the input are foced be have the same truth value (this isn't important here, but in more complicated circuits it's potentially possible for there to be circuits which allow extra solutions under certain input combinations that lead to ambiguous logic, but buffers can prevent this from being an issue).
+Since the input is terminated, the 2 halves of the input are foced be have the same truth value (this isn't important here, but in more complicated circuits it's potentially possible for there to be circuits which allow extra solutions under certain input combinations that lead to ambiguous logic, but buffers can prevent this from being an issue).
 
 Although this isn't actually necessary for Turing Competeness, the next circuit element I want to explain is the Fake XOR. The Fake XOR is works by having a vertex that has 2 inputs (A, B) and 1 output (C). If the value on the vertex is V, then we can compute C using the equation: C = V - A - B. Notably, this equation preserves parity (which is why this gate is most akin to an xor gate). Unfortunately, for the resulting data to be a valid logic level we need there to be only 2 possible values of C. This means that at best there are 3 possible input combinations which satisfy the gate (this is why it's a Fake XOR and not a real XOR). For example, if V = 5, then A and B can't simultaneously be 1 since then C would have to be 3, but that's illegal (other options work: 5 - 2 - 2 = 1, 5 - 2 - 1 = 2, 5 - 1 - 2 = 2). Alternatively, if V = 4, then A and B can't simultaneously be 2 since then C would have to be 0, which isn't a valid logic level in my 1/2 encoding scheme (other options work: 4 - 1 - 1 = 2, 4 - 1 - 2 = 1, 4 - 2 - 1 = 1). 
 
