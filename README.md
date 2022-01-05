@@ -7,17 +7,16 @@ Data is encoded as edges which have either a single bridge (false) or a double b
     
     As a NOT gate (F = false, T = true):
     
-    F - 3 = T
-    
-    T = 3 - F
-    
+    I - 3 - O       ||       F - 3 = T       ||       T - 3 - F
     
     As a Bendable Wire (I = input, O = output):
     
-            3 - O
-    I - 3   |
-        |   |
-        3 - 3
+            3 - O       ||               3 - F       ||               3 = T
+    I - 3   |           ||       F - 3   ‖           ||       T = 3   |    
+        |   |           ||           ‖   ‖           ||           |   |    
+        3 - 3           ||           3 - 3           ||           3 = 3    
+
+The left panels are the circuits with forced bridges solved, but arbitrary inputs/outputs. The middle panels are the circuits solved when the input is false. The right panels are the circuits solved when the input is true.
 
 Inputs and outputs are achieved by specifying particular edges as either inputs or outputs. Since each edge has 2 ends, this will always generate 2 copies of each input (and means that each output needs to be calculated twice. In my circuits I position my inputs along the left of the puzzle and my outputs along the right. For example, here is a circuit with 1 input/output that is a unitary logic function (forced bridges are already added):
 
