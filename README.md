@@ -46,9 +46,9 @@ For the time being please ignore the fact that these puzzles are not fully conne
           X                 ||             X                 ||             X |
             2 - 3 - O       ||               2 = 3 - F       ||               2 - 3 = T
  
- In this circuit, the data from X will propagate upwards when the input is true, and to the right when the input is false (also, note that the output is equal to the input). 
+In this circuit, the data from X will propagate to the right when the input is false (middle panel), and upwards when the input is true (right panel). Also, note that the input is not destroyed in this process. (Side note: the switch block, the cage, the inputs/outputs, and the terminator can be used to create any arbitrary logical function within my framework! That being said, the Fake XOR makes some tasks much easier.)
  
- The easiest circuit where this is useful is a wire splitter. The basic building block of the wire splitter is:
+The easiest circuit where the switch block is useful is a wire splitter. The basic building block of the wire splitter is:
  
           2 --- 3 - O       ||             2 === 3 - F       ||             2 --- 3 = T
     I - 2   1               ||       F - 2 - 1               ||       T = 2 | 1        
@@ -96,7 +96,7 @@ The ability to split wires can also be used to create a non-trivial buffer, whic
         ‖     ‖           ||           ‖     ‖           ||           ‖     ‖    
         2     2           ||           2     2           ||           2     2    
 
-Since the input is terminated, the 2 halves of the input are foced be have the same truth value (this isn't important here, but in more complicated circuits it's potentially possible for there to be circuits which allow extra solutions under certain input combinations that lead to ambiguous logic, but buffers can prevent this from being an issue).
+Since the input is terminated, the 2 halves of the input are foced be have the same truth value. Furthermore, since the output is generated using a loop, both halves of the output are also forced to have the same truth value. This isn't important here, but in more complicated circuits it's potentially possible for there to be circuits which allow extra solutions under certain input combinations that lead to ambiguous logic, but buffers can prevent this from being an issue.
 
 Although this isn't actually necessary for Turing Competeness, the next circuit element I want to explain is the Fake XOR. The Fake XOR is works by having a vertex that has 2 inputs (A, B) and 1 output (C). If the value on the vertex is V, then we can compute C using the equation: C = V - A - B. Notably, this equation preserves parity (which is why this gate is most akin to an xor gate). Unfortunately, for the resulting data to be a valid logic level we need there to be only 2 possible values of C. This means that at best there are 3 possible input combinations which satisfy the gate (this is why it's a Fake XOR and not a real XOR). For example, if V = 5, then A and B can't simultaneously be 1 since then C would have to be 3, but that's illegal (other options work: 5 - 2 - 2 = 1, 5 - 2 - 1 = 2, 5 - 1 - 2 = 2). Alternatively, if V = 4, then A and B can't simultaneously be 2 since then C would have to be 0, which isn't a valid logic level in my 1/2 encoding scheme (other options work: 4 - 1 - 1 = 2, 4 - 1 - 2 = 1, 4 - 2 - 1 = 1). 
 
