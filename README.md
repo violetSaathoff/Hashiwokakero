@@ -1,7 +1,7 @@
 # Hashiwokakero
 
 ## Overview
-This project is a demonstration of the fact that the puzzle Hashiwokakero (https://en.wikipedia.org/wiki/Hashiwokakero) is Turing Complete.
+This project is a demonstration of the fact that the puzzle Hashiwokakero (https://en.wikipedia.org/wiki/Hashiwokakero) is Turing Complete. I demonstrate this by creating circuit elements using Hashiwokakero puzzles. For this to work I need to define an encoding scheme which has inputs/outputs, I need to create bendable wires, I need to be able to split wires, and I need to be able to compute all 1/2 input logical functions (while a NOT gate and an OR gate would suffice, I have puzzles for each standard logic gate: NOT, OR, NOR, AND, NAND, XOR, XNOR, as well as additional puzzles to split wires and cross wires, as well as a non-trivial buffer circuit to protect more complicated circuits).
 
 Data is encoded as edges which have either a single bridge (false) or a double bridge (true). Notably, since (1 + 2) = (2 + 1) = 3, data can be notted using a 3. This also allows for the creationg of bendable wires. For example: 
     
@@ -99,6 +99,105 @@ The ability to split wires can also be used to create a non-trivial buffer, whic
 Since the input is terminated, the 2 halves of the input are foced be have the same truth value. Furthermore, since the output is generated using a loop, both halves of the output are also forced to have the same truth value. This isn't important here, but in more complicated circuits it's potentially possible for there to be circuits which allow extra solutions under certain input combinations that lead to ambiguous logic, but buffers can prevent this from being an issue.
 
 Although this isn't actually necessary for Turing Competeness, the next circuit element I want to explain is the Fake XOR. The Fake XOR is works by having a vertex that has 2 inputs (A, B) and 1 output (C). If the value on the vertex is V, then we can compute C using the equation: C = V - A - B. Notably, this equation preserves parity (which is why this gate is most akin to an xor gate). Unfortunately, for the resulting data to be a valid logic level we need there to be only 2 possible values of C. This means that at best there are 3 possible input combinations which satisfy the gate (this is why it's a Fake XOR and not a real XOR). For example, if V = 5, then A and B can't simultaneously be 1 since then C would have to be 3, but that's illegal (other options work: 5 - 2 - 2 = 1, 5 - 2 - 1 = 2, 5 - 1 - 2 = 2). Alternatively, if V = 4, then A and B can't simultaneously be 2 since then C would have to be 0, which isn't a valid logic level in my 1/2 encoding scheme (other options work: 4 - 1 - 1 = 2, 4 - 1 - 2 = 1, 4 - 2 - 1 = 1). 
+
+
+
+
+Finally, to be Turing Complete it has to be possible to compute an OR logic Function (all panels are fully solved): 
+
+        2                         2           ||           2                         2           ||           2                         2           ||           2                         2    
+        ‖                         ‖           ||           ‖                         ‖           ||           ‖                         ‖           ||           ‖                         ‖    
+    2 = 8 ======================= 8 = 2       ||       2 = 8 ======================= 8 = 2       ||       2 = 8 ======================= 8 = 2       ||       2 = 8 ======================= 8 = 2
+        ‖                         ‖           ||           ‖                         ‖           ||           ‖                         ‖           ||           ‖                         ‖    
+    3 = 7 ------------- 3         ‖           ||       3 = 7 ------------- 3         ‖           ||       3 - 7 ============= 3         ‖           ||       3 - 7 ============= 3         ‖    
+    |   ‖               ‖         ‖           ||       |   ‖               ‖         ‖           ||       ‖   ‖               |         ‖           ||       ‖   ‖               |         ‖    
+    |   6 === 4 = 2     ‖         ‖           ||       |   6 === 4 = 2     ‖         ‖           ||       ‖   6 === 4 - 2     |         ‖           ||       ‖   6 === 4 = 2     |         ‖    
+    |   ‖               ‖         ‖           ||       |   ‖               ‖         ‖           ||       ‖   ‖     |   |     |         ‖           ||       ‖   ‖               |         ‖    
+    3 = 7 - 2 ----- 1   ‖         ‖           ||       3 = 7 - 2 ----- 1   ‖         ‖           ||       3 - 7 = 2 |   | 1   |         ‖           ||       3 - 7 = 2       1   |         ‖    
+        ‖               2         ‖           ||           ‖               2         ‖           ||           ‖     |   | |   2         ‖           ||           ‖           |   2         ‖    
+    2 = 8 === 3 --------- 2 - 5 = 8 = 2       ||       2 = 8 === 3           2 = 5 = 8 = 2       ||       2 = 8 === 3   | |   | 2 = 5 = 8 = 2       ||       2 = 8 === 3     |   | 2 = 5 = 8 = 2
+        ‖         2 ------- 2 ‖   ‖           ||           ‖     |   2         2 |   ‖           ||           ‖         2 |   |   2 |   ‖           ||           ‖     |   2 |   |   2 |   ‖    
+    3 = 7 - 2 - 1 | 2 = 4   | 3 - 7 = 3       ||       3 - 7 = 2 | 1 ‖ 2 = 4   ‖ 3 = 7 - 3       ||       3 = 7 - 2 - 1 | 2 - 4   ‖ 3 = 7 - 3       ||       3 - 7 = 2 | 1 ‖ 2 - 4   ‖ 3 = 7 - 3
+    |   ‖         |     ‖   |     ‖   |       ||       ‖   ‖     | | ‖     ‖   ‖     ‖   ‖       ||       |   ‖         |     ‖   ‖     ‖   ‖       ||       ‖   ‖     | | ‖     ‖   ‖     ‖   ‖
+    |   6 === 3 - 4 === 8 = 7 === 6   |       ||       ‖   6 === 3 | 4 === 8 = 7 === 6   ‖       ||       |   6 === 3 - 4 === 8 = 7 === 6   ‖       ||       ‖   6 === 3 | 4 === 8 = 7 === 6   ‖
+    |   ‖               ‖   ‖     ‖   |       ||       ‖   ‖       |       ‖   |     ‖   ‖       ||       |   ‖               ‖   |     ‖   ‖       ||       ‖   ‖       |       ‖   |     ‖   ‖
+    3 = 7 - 3 = 2       2   3 --- 7 = 3       ||       3 - 7 = 3 - 2       2   3 === 7 - 3       ||       3 = 7 - 3 = 2       2   3 === 7 - 3       ||       3 - 7 = 3 - 2       2   3 === 7 - 3
+        ‖                         ‖           ||           ‖                         ‖           ||           ‖                         ‖           ||           ‖                         ‖    
+    2 = 8 ======================= 8 = 2       ||       2 = 8 ======================= 8 = 2       ||       2 = 8 ======================= 8 = 2       ||       2 = 8 ======================= 8 = 2
+        ‖                         ‖           ||           ‖                         ‖           ||           ‖                         ‖           ||           ‖                         ‖    
+        2                         2           ||           2                         2           ||           2                         2           ||           2                         2    
+
+The NOR, AND, and NAND gates are all made by notting the inputs/outputs of the OR gate appropriately. For completeness though I've included them below. First is the NOR gate:
+
+        2                       2           ||           2                       2           ||           2                       2           ||           2                       2    
+        ‖                       ‖           ||           ‖                       ‖           ||           ‖                       ‖           ||           ‖                       ‖    
+    2 = 8 ===================== 8 = 2       ||       2 = 8 ===================== 8 = 2       ||       2 = 8 ===================== 8 = 2       ||       2 = 8 ===================== 8 = 2
+        ‖                       ‖           ||           ‖                       ‖           ||           ‖                       ‖           ||           ‖                       ‖    
+    3 = 7 ------------- 3       ‖           ||       3 = 7 ------------- 3       ‖           ||       3 - 7 ============= 3       ‖           ||       3 - 7 ============= 3       ‖    
+    |   ‖               ‖       ‖           ||       |   ‖               ‖       ‖           ||       ‖   ‖               |       ‖           ||       ‖   ‖               |       ‖    
+    |   6 === 4 = 2     ‖       ‖           ||       |   6 === 4 = 2     ‖       ‖           ||       ‖   6 === 4 - 2     |       ‖           ||       ‖   6 === 4 = 2     |       ‖    
+    |   ‖               ‖       ‖           ||       |   ‖               ‖       ‖           ||       ‖   ‖     |   |     |       ‖           ||       ‖   ‖               |       ‖    
+    3 = 7 - 2 ----- 1   ‖       ‖           ||       3 = 7 - 2 ----- 1   ‖       ‖           ||       3 - 7 = 2 |   | 1   |       ‖           ||       3 - 7 = 2       1   |       ‖    
+        ‖               2       ‖           ||           ‖               2       ‖           ||           ‖     |   | |   2       ‖           ||           ‖           |   2       ‖    
+    2 = 8 === 3 ----------- 4 = 8 = 2       ||       2 = 8 === 3             4 = 8 = 2       ||       2 = 8 === 3   | |   |   4 = 8 = 2       ||       2 = 8 === 3     |   |   4 = 8 = 2
+        ‖         2 ----- 2 |   ‖           ||           ‖     |   2       2 ‖   ‖           ||           ‖         2 |   | 2 ‖   ‖           ||           ‖     |   2 |   | 2 ‖   ‖    
+    3 = 7 - 2 - 1 | 2 = 4 | 3 = 7 - 3       ||       3 - 7 = 2 | 1 ‖ 2 = 4 ‖ 3 - 7 = 3       ||       3 = 7 - 2 - 1 | 2 - 4 ‖ 3 - 7 = 3       ||       3 - 7 = 2 | 1 ‖ 2 - 4 ‖ 3 - 7 = 3
+    |   ‖         |     ‖ |     ‖   ‖       ||       ‖   ‖     | | ‖     ‖ ‖     ‖   |       ||       |   ‖         |     ‖ ‖     ‖   |       ||       ‖   ‖     | | ‖     ‖ ‖     ‖   |
+    |   6 === 3 - 4 === 6 | 2 = 6   ‖       ||       ‖   6 === 3 | 4 === 6 ‖ 2 = 6   |       ||       |   6 === 3 - 4 === 6 ‖ 2 = 6   |       ||       ‖   6 === 3 | 4 === 6 ‖ 2 = 6   |
+    |   ‖               ‖ |     ‖   ‖       ||       ‖   ‖       |       ‖ ‖     ‖   |       ||       |   ‖               ‖ ‖     ‖   |       ||       ‖   ‖       |       ‖ ‖     ‖   |
+    3 = 7 - 3 = 2       ‖ 3 === 7 - 3       ||       3 - 7 = 3 - 2       ‖ 3 --- 7 = 3       ||       3 = 7 - 3 = 2       ‖ 3 --- 7 = 3       ||       3 - 7 = 3 - 2       ‖ 3 --- 7 = 3
+        ‖               ‖       ‖           ||           ‖               ‖       ‖           ||           ‖               ‖       ‖           ||           ‖               ‖       ‖    
+    2 = 8 ============= 6 ===== 8 = 2       ||       2 = 8 ============= 6 ===== 8 = 2       ||       2 = 8 ============= 6 ===== 8 = 2       ||       2 = 8 ============= 6 ===== 8 = 2
+        ‖                       ‖           ||           ‖                       ‖           ||           ‖                       ‖           ||           ‖                       ‖    
+        2                       2           ||           2                       2           ||           2                       2           ||           2                       2    
+
+Next is the AND gate:
+
+        2                       2           ||           2                       2           ||           2                       2           ||           2                       2    
+        ‖                       ‖           ||           ‖                       ‖           ||           ‖                       ‖           ||           ‖                       ‖    
+    2 = 8 ===================== 8 = 2       ||       2 = 8 ===================== 8 = 2       ||       2 = 8 ===================== 8 = 2       ||       2 = 8 ===================== 8 = 2
+        ‖                       ‖           ||           ‖                       ‖           ||           ‖                       ‖           ||           ‖                       ‖    
+    3 = 7 ------------- 2       ‖           ||       3 = 7 ------------- 2       ‖           ||       3 - 7 ============= 2       ‖           ||       3 - 7 ============= 2       ‖    
+    |   ‖               |       ‖           ||       |   ‖               |       ‖           ||       ‖   ‖                       ‖           ||       ‖   ‖                       ‖    
+    |   6 === 4 = 2     |       ‖           ||       |   6 === 4 - 2     |       ‖           ||       ‖   6 === 4 = 2             ‖           ||       ‖   6 === 4 = 2             ‖    
+    |   ‖               |       ‖           ||       |   ‖     |   |     |       ‖           ||       ‖   ‖                       ‖           ||       ‖   ‖                       ‖    
+    3 = 6           1   |       ‖           ||       3 = 6     |   | 1   |       ‖           ||       3 - 6 --------- 1           ‖           ||       3 - 6 --------- 1           ‖    
+        ‖           |   |       ‖           ||           ‖     |   | |   |       ‖           ||           ‖                       ‖           ||           ‖                       ‖    
+    2 = 8 === 3     |   |   4 = 8 = 2       ||       2 = 8 === 3   | |   |   4 = 8 = 2       ||       2 = 8 === 3             4 = 8 = 2       ||       2 = 8 === 3 ----------- 4 = 8 = 2
+        ‖     |   2 |   | 2 ‖   ‖           ||           ‖         2 |   | 2 ‖   ‖           ||           ‖     |   2       2 ‖   ‖           ||           ‖         2 ----- 2 |   ‖    
+    3 = 6     | 1 ‖ 2 - 4 ‖ 3 - 7 = 3       ||       3 - 6 ----- 1 | 2 - 4 ‖ 3 - 7 = 3       ||       3 = 6     | 1 ‖ 2 = 4 ‖ 3 - 7 = 3       ||       3 - 6 ----- 1 | 2 = 4 | 3 = 7 - 3
+    |   ‖     | | ‖     ‖ ‖     ‖   |       ||       ‖   ‖         |     ‖ ‖     ‖   |       ||       |   ‖     | | ‖     ‖ ‖     ‖   |       ||       ‖   ‖         |     ‖ |     ‖   ‖
+    |   6 === 3 | 4 === 6 ‖ 2 = 6   |       ||       ‖   6 === 3 - 4 === 6 ‖ 2 = 6   |       ||       |   6 === 3 | 4 === 6 ‖ 2 = 6   |       ||       ‖   6 === 3 - 4 === 6 | 2 = 6   ‖
+    |   ‖       |       ‖ ‖     ‖   |       ||       ‖   ‖               ‖ ‖     ‖   |       ||       |   ‖       |       ‖ ‖     ‖   |       ||       ‖   ‖               ‖ |     ‖   ‖
+    3 = 7 ----- 2       ‖ 3 --- 7 = 3       ||       3 - 7 ===== 2       ‖ 3 --- 7 = 3       ||       3 = 7 ----- 2       ‖ 3 --- 7 = 3       ||       3 - 7 ===== 2       ‖ 3 === 7 - 3
+        ‖               ‖       ‖           ||           ‖               ‖       ‖           ||           ‖               ‖       ‖           ||           ‖               ‖       ‖    
+    2 = 8 ============= 6 ===== 8 = 2       ||       2 = 8 ============= 6 ===== 8 = 2       ||       2 = 8 ============= 6 ===== 8 = 2       ||       2 = 8 ============= 6 ===== 8 = 2
+        ‖                       ‖           ||           ‖                       ‖           ||           ‖                       ‖           ||           ‖                       ‖    
+        2                       2           ||           2                       2           ||           2                       2           ||           2                       2    
+
+And finally, the NAND gate:
+
+        2                         2           ||           2                         2           ||           2                         2           ||           2                         2    
+        ‖                         ‖           ||           ‖                         ‖           ||           ‖                         ‖           ||           ‖                         ‖    
+    2 = 8 ======================= 8 = 2       ||       2 = 8 ======================= 8 = 2       ||       2 = 8 ======================= 8 = 2       ||       2 = 8 ======================= 8 = 2
+        ‖                         ‖           ||           ‖                         ‖           ||           ‖                         ‖           ||           ‖                         ‖    
+    3 = 7 ------------- 2         ‖           ||       3 = 7 ------------- 2         ‖           ||       3 - 7 ============= 2         ‖           ||       3 - 7 ============= 2         ‖    
+    |   ‖               |         ‖           ||       |   ‖               |         ‖           ||       ‖   ‖                         ‖           ||       ‖   ‖                         ‖    
+    |   6 === 4 = 2     |         ‖           ||       |   6 === 4 - 2     |         ‖           ||       ‖   6 === 4 = 2               ‖           ||       ‖   6 === 4 = 2               ‖    
+    |   ‖               |         ‖           ||       |   ‖     |   |     |         ‖           ||       ‖   ‖                         ‖           ||       ‖   ‖                         ‖    
+    3 = 6           1   |         ‖           ||       3 = 6     |   | 1   |         ‖           ||       3 - 6 --------- 1             ‖           ||       3 - 6 --------- 1             ‖    
+        ‖           |   |         ‖           ||           ‖     |   | |   |         ‖           ||           ‖                         ‖           ||           ‖                         ‖    
+    2 = 8 === 3     |   | 2 = 5 = 8 = 2       ||       2 = 8 === 3   | |   | 2 = 5 = 8 = 2       ||       2 = 8 === 3           2 = 5 = 8 = 2       ||       2 = 8 === 3 --------- 2 - 5 = 8 = 2
+        ‖     |   2 |   |   2 |   ‖           ||           ‖         2 |   |   2 |   ‖           ||           ‖     |   2         2 |   ‖           ||           ‖         2 ------- 2 ‖   ‖    
+    3 = 6     | 1 ‖ 2 - 4   ‖ 3 = 7 - 3       ||       3 - 6 ----- 1 | 2 - 4   ‖ 3 = 7 - 3       ||       3 = 6     | 1 ‖ 2 = 4   ‖ 3 = 7 - 3       ||       3 - 6 ----- 1 | 2 = 4   | 3 - 7 = 3
+    |   ‖     | | ‖     ‖   ‖     ‖   ‖       ||       ‖   ‖         |     ‖   ‖     ‖   ‖       ||       |   ‖     | | ‖     ‖   ‖     ‖   ‖       ||       ‖   ‖         |     ‖   |     ‖   |
+    |   6 === 3 | 4 === 8 = 7 === 6   ‖       ||       ‖   6 === 3 - 4 === 8 = 7 === 6   ‖       ||       |   6 === 3 | 4 === 8 = 7 === 6   ‖       ||       ‖   6 === 3 - 4 === 8 = 7 === 6   |
+    |   ‖       |       ‖   |     ‖   ‖       ||       ‖   ‖               ‖   |     ‖   ‖       ||       |   ‖       |       ‖   |     ‖   ‖       ||       ‖   ‖               ‖   ‖     ‖   |
+    3 = 7 ----- 2       2   3 === 7 - 3       ||       3 - 7 ===== 2       2   3 === 7 - 3       ||       3 = 7 ----- 2       2   3 === 7 - 3       ||       3 - 7 ===== 2       2   3 --- 7 = 3
+        ‖                         ‖           ||           ‖                         ‖           ||           ‖                         ‖           ||           ‖                         ‖    
+    2 = 8 ======================= 8 = 2       ||       2 = 8 ======================= 8 = 2       ||       2 = 8 ======================= 8 = 2       ||       2 = 8 ======================= 8 = 2
+        ‖                         ‖           ||           ‖                         ‖           ||           ‖                         ‖           ||           ‖                         ‖    
+        2                         2           ||           2                         2           ||           2                         2           ||           2                         2    
 
 ## Excel
 
