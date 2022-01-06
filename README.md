@@ -98,9 +98,63 @@ The ability to split wires can also be used to create a non-trivial buffer, whic
 
 Since the input is terminated, the 2 halves of the input are foced be have the same truth value. Furthermore, since the output is generated using a loop, both halves of the output are also forced to have the same truth value. This isn't important here, but in more complicated circuits it's potentially possible for there to be circuits which allow extra solutions under certain input combinations that lead to ambiguous logic, but buffers can prevent this from being an issue.
 
-Although this isn't actually necessary for Turing Competeness, the next circuit element I want to explain is the Fake XOR. The Fake XOR is works by having a vertex that has 2 inputs (A, B) and 1 output (C). If the value on the vertex is V, then we can compute C using the equation: C = V - A - B. Notably, this equation preserves parity (which is why this gate is most akin to an xor gate). Unfortunately, for the resulting data to be a valid logic level we need there to be only 2 possible values of C. This means that at best there are 3 possible input combinations which satisfy the gate (this is why it's a Fake XOR and not a real XOR). For example, if V = 5, then A and B can't simultaneously be 1 since then C would have to be 3, but that's illegal (other options work: 5 - 2 - 2 = 1, 5 - 2 - 1 = 2, 5 - 1 - 2 = 2). Alternatively, if V = 4, then A and B can't simultaneously be 2 since then C would have to be 0, which isn't a valid logic level in my 1/2 encoding scheme (other options work: 4 - 1 - 1 = 2, 4 - 1 - 2 = 1, 4 - 2 - 1 = 1). 
+Although this isn't actually necessary for Turing Competeness, the next circuit element I want to explain is the FAKE XOR. The Fake XOR is works by having a vertex that has 2 inputs (A, B) and 1 output (C). If the value on the vertex is V, then we can compute C using the equation: C = V - A - B. Notably, this equation preserves parity (which is why this gate is most akin to an xor gate). Unfortunately, for the resulting data to be a valid logic level we need there to be only 2 possible values of C. This means that at best there are 3 possible input combinations which satisfy the gate (this is why it's a FAKE XOR and not a real XOR). For example, if V = 5, then A and B can't simultaneously be 1 since then C would have to be 3, but that's illegal (other options work: 5 - 2 - 2 = 1, 5 - 2 - 1 = 2, 5 - 1 - 2 = 2). Alternatively, if V = 4, then A and B can't simultaneously be 2 since then C would have to be 0, which isn't a valid logic level in my 1/2 encoding scheme (other options work: 4 - 1 - 1 = 2, 4 - 1 - 2 = 1, 4 - 2 - 1 = 1). 
 
+Here is a FAKE XOR which uses a 4 (each panel is for a different input combination, and is fully solved when possible - note that because NOT gates are cheap I don't really care that this is actually a FAKE XNOR instead of a FAKE XOR):
 
+    F           ||       F           ||       T           ||       T    
+    |           ||       |           ||       ‖           ||       ‖    
+    4 = T       ||       4 - F       ||       4 - F       ||       4   X
+    |           ||       ‖           ||       |           ||       ‖    
+    F           ||       T           ||       F           ||       T    
+
+And here is a FAKE XOR which uses a 5:
+
+    F           ||       F           ||       T           ||       T    
+    |           ||       |           ||       ‖           ||       ‖    
+    5 = X       ||       5 = T       ||       5 = T       ||       5 - F
+    |           ||       ‖           ||       |           ||       ‖    
+    F           ||       T           ||       F           ||       T    
+
+Using an IF/ELSE block and 2 FAKE XORs it is actually possible to make an XOR gate which operates on individual data channels!
+
+        2                 2           ||           2                 2           ||           2                 2           ||           2                 2    
+        ‖                 ‖           ||           ‖                 ‖           ||           ‖                 ‖           ||           ‖                 ‖    
+    2 = 8 =============== 8 = 2       ||       2 = 8 =============== 8 = 2       ||       2 = 8 =============== 8 = 2       ||       2 = 8 =============== 8 = 2
+        ‖   2 ======= 3   ‖           ||           ‖   2 ======= 3   ‖           ||           ‖   2 ------- 3   ‖           ||           ‖   2 ======= 3   ‖    
+    F - 6 --- 1       |   ‖           ||       F - 6 --- 1       |   ‖           ||       T = 6   | 1       ‖   ‖           ||       T = 6     1       |   ‖    
+        ‖   2 --- 2   |   ‖           ||           ‖   2     2   |   ‖           ||           ‖   2 |   2   ‖   ‖           ||           ‖   2 |   2   |   ‖    
+    2 = 6   |     |   4 = 7 - F       ||       2 = 6   ‖     ‖   4 - 7 = T       ||       2 = 6   | |   ‖   4 - 7 = T       ||       2 = 6   ‖ |   ‖   4 = 7 - F
+        ‖   |     |   |   ‖           ||           ‖   ‖     ‖   ‖   ‖           ||           ‖   | |   ‖   |   ‖           ||           ‖   ‖ |   ‖   |   ‖    
+    F - 7 = 3     |   |   ‖           ||       T = 7 - 3     ‖   ‖   ‖           ||       F - 7 = 3 |   ‖   |   ‖           ||       T = 7 - 3 |   ‖   |   ‖    
+        ‖     2 = 5 = 3   ‖           ||           ‖     2 = 5 - 3   ‖           ||           ‖     2 - 5 = 3   ‖           ||           ‖     2 - 5 = 3   ‖    
+    2 = 8 =============== 8 = 2       ||       2 = 8 =============== 8 = 2       ||       2 = 8 =============== 8 = 2       ||       2 = 8 =============== 8 = 2
+        ‖                 ‖           ||           ‖                 ‖           ||           ‖                 ‖           ||           ‖                 ‖    
+        2                 2           ||           2                 2           ||           2                 2           ||           2                 2    
+
+Next, using this XOR element and the SWAP element it is possible to create an actual XOR gate (note that the output is buffered)! There's actually a trick here where I merged the SWAP element with one of the XOR elements, which is why one of the FAKE XORs actually uses a 3 (at position (4,4)).
+
+        2                     2           ||           2                     2           ||           2                     2           ||           2                     2    
+        ‖                     ‖           ||           ‖                     ‖           ||           ‖                     ‖           ||           ‖                     ‖    
+    2 = 8 =================== 8 = 2       ||       2 = 8 =================== 8 = 2       ||       2 = 8 =================== 8 = 2       ||       2 = 8 =================== 8 = 2
+        ‖                     ‖           ||           ‖                     ‖           ||           ‖                     ‖           ||           ‖                     ‖    
+    3 = 7 - 3 - 5 = 4 = 4 --- 7 = 3       ||       3 = 7 - 3 = 5 = 4 = 4 === 7 - 3       ||       3 - 7 = 3 - 5 = 4 = 4 === 7 - 3       ||       3 - 7 = 3 - 5 = 4 = 4 --- 7 = 3
+    |   ‖   | 2 ‖       |     ‖   |       ||       |   ‖     2 |             ‖   ‖       ||       ‖   ‖     2 ‖             ‖   ‖       ||       ‖   ‖     2 ‖       |     ‖   |
+    |   4   | ‖ 4       | 3 = 6   |       ||       |   4     ‖ 4 ------- 3 = 6   ‖       ||       ‖   4     ‖ 4 ------- 3 = 6   ‖       ||       ‖   4     ‖ 4       | 3 = 6   |
+    |   ‖   | ‖ ‖       | |   ‖   |       ||       |   ‖     ‖ ‖             ‖   ‖       ||       ‖   ‖     ‖ |             ‖   ‖       ||       ‖   ‖     ‖ ‖       | |   ‖   |
+    3 = 6   | 3 ‖       1 |   6 = 3       ||       3 = 6     3 ‖       1 --- 6 - 3       ||       3 - 6 --- 3 |       1 --- 6 - 3       ||       3 - 6 --- 3 ‖       1 |   6 = 3
+        ‖   | | ‖         |   ‖           ||           ‖     | ‖             ‖           ||           ‖       |             ‖           ||           ‖       ‖         |   ‖    
+    2 = 6   | | ‖ 2 = 5 - 6 = 8 = 2       ||       2 = 6     | ‖ 2 - 5 = 6 = 8 = 2       ||       2 = 6       | 2 = 5 = 6 = 8 = 2       ||       2 = 6       ‖ 2 - 5 = 6 = 8 = 2
+        ‖   | | ‖     ‖   ‖   ‖           ||           ‖     | ‖ |   ‖   ‖   ‖           ||           ‖       |     |   ‖   ‖           ||           ‖       ‖ |   ‖   |   ‖    
+    3 = 7 - 2 | 2     ‖   3   ‖           ||       3 - 7 = 2 | 2 |   ‖   3   ‖           ||       3 = 7 - 2 - 2     |   3   ‖           ||       3 - 7 = 2   2 |   ‖   3   ‖    
+    |   ‖     |       ‖   |   ‖           ||       ‖   ‖     |   |   ‖   |   ‖           ||       |   ‖             |   |   ‖           ||       ‖   ‖         |   ‖   ‖   ‖    
+    |   6 === 3       2   |   ‖           ||       ‖   6 === 3   |   2   |   ‖           ||       |   6 === 3 ----- 2   |   ‖           ||       ‖   6 === 3   |   2   ‖   ‖    
+    |   ‖                 |   ‖           ||       ‖   ‖         |       |   ‖           ||       |   ‖                 |   ‖           ||       ‖   ‖     |   |       ‖   ‖    
+    3 = 7 - 2 --- 1       |   ‖           ||       3 - 7 = 2     1       |   ‖           ||       3 = 7 - 2 --- 1       |   ‖           ||       3 - 7 = 2 |   1       ‖   ‖    
+        ‖     2 ========= 3   ‖           ||           ‖     2 ========= 3   ‖           ||           ‖     2 ========= 3   ‖           ||           ‖     2 --------- 3   ‖    
+    2 = 8 =================== 8 = 2       ||       2 = 8 =================== 8 = 2       ||       2 = 8 =================== 8 = 2       ||       2 = 8 =================== 8 = 2
+        ‖                     ‖           ||           ‖                     ‖           ||           ‖                     ‖           ||           ‖                     ‖    
+        2                     2           ||           2                     2           ||           2                     2           ||           2                     2    
 
 
 Finally, to be Turing Complete it has to be possible to compute an OR logic Function (all panels are fully solved): 
@@ -127,7 +181,9 @@ Finally, to be Turing Complete it has to be possible to compute an OR logic Func
         ‖                         ‖           ||           ‖                         ‖           ||           ‖                         ‖           ||           ‖                         ‖    
         2                         2           ||           2                         2           ||           2                         2           ||           2                         2    
 
-The NOR, AND, and NAND gates are all made by notting the inputs/outputs of the OR gate appropriately. For completeness though I've included them below. First is the NOR gate:
+The OR gate works by using a doubled IF/ELSE block controlled by the first input (A) to only allow the second input (B) to talk to the output when the A is false. Meanwhile, if the B is false it will send bridges through whichever gate is open (the upper/IF gate when A is true which leads to a terminator, and the right/ELSE gate when A is false which leads to the output). This means that the only time bridges pass through the ELSE gate to change the output is when both inputs are false. When this happens the output is false, otherwise the output is true, which is the desired logic function. Also, note that both inputs are buffered (A is buffered because its input channels happend to loop together, and B is buffered using an actual buffer circuit).
+
+The NOR, AND, and NAND gates are all made by notting the inputs/outputs of the OR gate appropriately; for completeness I've included their solved states below. First is the NOR gate:
 
         2                       2           ||           2                       2           ||           2                       2           ||           2                       2    
         ‖                       ‖           ||           ‖                       ‖           ||           ‖                       ‖           ||           ‖                       ‖    
@@ -175,7 +231,7 @@ Next is the AND gate:
         ‖                       ‖           ||           ‖                       ‖           ||           ‖                       ‖           ||           ‖                       ‖    
         2                       2           ||           2                       2           ||           2                       2           ||           2                       2    
 
-And finally, the NAND gate:
+Next, the NAND gate:
 
         2                         2           ||           2                         2           ||           2                         2           ||           2                         2    
         ‖                         ‖           ||           ‖                         ‖           ||           ‖                         ‖           ||           ‖                         ‖    
@@ -198,6 +254,69 @@ And finally, the NAND gate:
     2 = 8 ======================= 8 = 2       ||       2 = 8 ======================= 8 = 2       ||       2 = 8 ======================= 8 = 2       ||       2 = 8 ======================= 8 = 2
         ‖                         ‖           ||           ‖                         ‖           ||           ‖                         ‖           ||           ‖                         ‖    
         2                         2           ||           2                         2           ||           2                         2           ||           2                         2    
+
+And lastly, the XNOR gate, which is an XOR gate with a couple NOT gates deleted:
+
+        2                     2           ||           2                     2           ||           2                     2           ||           2                     2    
+        ‖                     ‖           ||           ‖                     ‖           ||           ‖                     ‖           ||           ‖                     ‖    
+    2 = 8 =================== 8 = 2       ||       2 = 8 =================== 8 = 2       ||       2 = 8 =================== 8 = 2       ||       2 = 8 =================== 8 = 2
+        ‖                     ‖           ||           ‖                     ‖           ||           ‖                     ‖           ||           ‖                     ‖    
+    3 = 7 - 3 - 5 = 6 = 4 === 7 - 3       ||       3 = 7 - 3 = 5 = 6 = 4 --- 7 = 3       ||       3 - 7 = 3 - 5 = 6 = 4 --- 7 = 3       ||       3 - 7 = 3 - 5 = 6 = 4 === 7 - 3
+    |   ‖   | 2 ‖   ‖         ‖   ‖       ||       |   ‖     2 |   ‖   |     ‖   |       ||       ‖   ‖     2 ‖   ‖   |     ‖   |       ||       ‖   ‖     2 ‖   ‖         ‖   ‖
+    |   4   | ‖ 5 - 4 --- 3 = 6   ‖       ||       |   4     ‖ 5 = 4   | 3 = 6   |       ||       ‖   4     ‖ 5 = 4   | 3 = 6   |       ||       ‖   4     ‖ 5 - 4 --- 3 = 6   ‖
+    |   ‖   | ‖ ‖             ‖   ‖       ||       |   ‖     ‖ ‖       | |   ‖   |       ||       ‖   ‖     ‖ |       | |   ‖   |       ||       ‖   ‖     ‖ ‖             ‖   ‖
+    3 = 6   | 3 ‖       1 --- 6 - 3       ||       3 = 6     3 ‖       1 |   6 = 3       ||       3 - 6 --- 3 |       1 |   6 = 3       ||       3 - 6 --- 3 ‖       1 --- 6 - 3
+        ‖   | | ‖             ‖           ||           ‖     | ‖         |   ‖           ||           ‖       |         |   ‖           ||           ‖       ‖             ‖    
+    2 = 6   | | ‖ 2 - 5 = 6 = 8 = 2       ||       2 = 6     | ‖ 2 = 5 - 6 = 8 = 2       ||       2 = 6       | 2 - 5 = 6 = 8 = 2       ||       2 = 6       ‖ 2 = 5 = 6 = 8 = 2
+        ‖   | | ‖ |   ‖   ‖   ‖           ||           ‖     | ‖     ‖   ‖   ‖           ||           ‖       | |   ‖   |   ‖           ||           ‖       ‖     |   ‖   ‖    
+    3 = 7 - 2 | 2 |   ‖   3   ‖           ||       3 - 7 = 2 | 2     ‖   3   ‖           ||       3 = 7 - 2 - 2 |   ‖   3   ‖           ||       3 - 7 = 2   2     |   3   ‖    
+    |   ‖     |   |   ‖   |   ‖           ||       ‖   ‖     |       ‖   |   ‖           ||       |   ‖         |   ‖   ‖   ‖           ||       ‖   ‖             |   |   ‖    
+    |   6 === 3   |   2   |   ‖           ||       ‖   6 === 3       2   |   ‖           ||       |   6 === 3   |   2   ‖   ‖           ||       ‖   6 === 3 ----- 2   |   ‖    
+    |   ‖         |       |   ‖           ||       ‖   ‖                 |   ‖           ||       |   ‖     |   |       ‖   ‖           ||       ‖   ‖                 |   ‖    
+    3 = 6         1       |   ‖           ||       3 - 6 ------- 1       |   ‖           ||       3 = 6     |   1       ‖   ‖           ||       3 - 6 ------- 1       |   ‖    
+        ‖     2 ========= 3   ‖           ||           ‖     2 ========= 3   ‖           ||           ‖     2 --------- 3   ‖           ||           ‖     2 ========= 3   ‖    
+    2 = 8 =================== 8 = 2       ||       2 = 8 =================== 8 = 2       ||       2 = 8 =================== 8 = 2       ||       2 = 8 =================== 8 = 2
+        ‖                     ‖           ||           ‖                     ‖           ||           ‖                     ‖           ||           ‖                     ‖    
+        2                     2           ||           2                     2           ||           2                     2           ||           2                     2    
+
+Finally, although it is possible to swap elements using an xor swap, in practice there is are better options which are made of an IF/ELSE gate and a FAKE XOR gate. The first option is:
+
+          2 = 5 --- F       ||             2 = 5 === T       ||             2 = 5 --- F       ||             2 - 5 === T
+    F - 2 - 1 ‖             ||       F - 2 - 1 |             ||       T = 2   1 ‖             ||       T = 2 | 1 ‖      
+          2   2             ||             2 - 2             ||             2 | 2             ||             2 | 2      
+          ‖ 2 = 3 - F       ||             | 2 = 3 - F       ||             ‖ 2 - 3 = T       ||             | 2 - 3 = T
+    F --- 3                 ||       T === 3                 ||       F --- 5 = 2             ||       T === 5 = 2      
+
+The second option is:
+
+          2 = 3             ||             2 = 3             ||             2 - 3             ||             2 = 3      
+    F - 2 - 1 |             ||       F - 2 - 1 |             ||       T = 2 | 1 ‖             ||       T = 2   1 |      
+    F --- 2 - 3 --- F       ||       T === 2   3 === T       ||       F --- 2 | 3 --- F       ||       T === 2 | 3 === T
+            2 = 3 - F       ||               2 = 3 - F       ||               2 - 3 = T       ||               2 - 3 = T
+
+Next, although there are several ways to use this element to make an actual SWAP gate, the best option I've found is to pair the IF/ELSE gates of the first input while splitting the second input:
+
+        2                               2           ||           2                               2           ||           2                               2           ||           2                               2    
+        ‖                               ‖           ||           ‖                               ‖           ||           ‖                               ‖           ||           ‖                               ‖    
+    2 = 8 === 6 ======================= 8 = 2       ||       2 = 8 === 6 ======================= 8 = 2       ||       2 = 8 === 6 ======================= 8 = 2       ||       2 = 8 === 6 ======================= 8 = 2
+        ‖     ‖                         ‖           ||           ‖     ‖                         ‖           ||           ‖     ‖                         ‖           ||           ‖     ‖                         ‖    
+    3 = 7 - 3 ‖     3 ============= 3 - 7 = 3       ||       3 = 7 - 3 ‖     3 ------------- 3 = 7 - 3       ||       3 - 7 = 3 ‖     3 ============= 3 - 7 = 3       ||       3 - 7 = 3 ‖     3 ------------- 3 = 7 - 3
+    |   ‖   ‖ ‖     | 4 ===== 4         ‖   |       ||       |   ‖   ‖ ‖     ‖ 4 ===== 4         ‖   ‖       ||       ‖   ‖   | ‖     | 4 ===== 4         ‖   |       ||       ‖   ‖   | ‖     ‖ 4 ===== 4         ‖   ‖
+    |   4   ‖ 4 === 5 ‖       ‖     2 = 6   |       ||       |   4   ‖ 4 --- 5 ‖       ‖     2 = 6   ‖       ||       ‖   4   | 4 === 5 ‖       ‖     2 = 6   |       ||       ‖   4   | 4 === 5 ‖       ‖     2 = 6   ‖
+    |   ‖   2     1 ‖ ‖       ‖         ‖   |       ||       |   ‖   2 |   1 ‖ ‖       ‖         ‖   ‖       ||       ‖   ‖   2 --- 1 ‖ ‖       ‖         ‖   |       ||       ‖   ‖   2 --- 1 | ‖       ‖         ‖   ‖
+    3 = 6       1 | ‖ ‖ 2 === 7 === 3 - 7 = 3       ||       3 = 6     | 1 | ‖ ‖ 2 === 7 --- 3 = 7 - 3       ||       3 - 6 ----- 1   ‖ ‖ 2 --- 7 === 3 - 7 = 3       ||       3 - 6 ----- 1   | ‖ 2 === 7 --- 3 = 7 - 3
+        ‖     2 | | 2 ‖       |         ‖           ||           ‖     2 | | 2 ‖       ‖         ‖           ||           ‖     2     2 ‖ |     ‖         ‖           ||           ‖     2 --- 2 ‖       ‖         ‖    
+    2 = 8 = 2 ‖ | 2 - 4 --- 1 | 2 ===== 8 = 2       ||       2 = 8 = 2 | | 2 - 4 --- 1 ‖ 2 ===== 8 = 2       ||       2 = 8 = 2 ‖   2 = 4 |   1 ‖ 2 ===== 8 = 2       ||       2 = 8 = 2 |   2 = 4     1 ‖ 2 ===== 8 = 2
+        ‖     ‖ 4 - 2 --- 1   |         ‖           ||           ‖     | 4 - 2 --- 1   ‖         ‖           ||           ‖     ‖ 4 = 2   | 1 | ‖         ‖           ||           ‖     | 4 = 2     1 | ‖         ‖    
+    3 = 7 --- 3 ‖             | 3 = 3 - 7 = 3       ||       3 - 7 === 3 ‖             ‖ 3 = 3 - 7 = 3       ||       3 = 7 --- 3 ‖       | | | ‖ 3 - 3 = 7 - 3       ||       3 - 7 === 3 ‖         | | ‖ 3 - 3 = 7 - 3
+    |   ‖       ‖ 3 --- 4 --- 2 |       ‖   |       ||       ‖   ‖       ‖ 3 === 4     2 |       ‖   |       ||       |   ‖       ‖ 3 --- 4 | | 2 ‖       ‖   ‖       ||       ‖   ‖       ‖ 3 === 4 | | 2 ‖       ‖   ‖
+    |   6 ===== 4 ‖     ‖   2 = 5 ===== 6   |       ||       ‖   6 ===== 4 |     ‖   2 = 5 ===== 6   |       ||       |   6 ===== 4 ‖     ‖ | 2 - 5 ===== 6   ‖       ||       ‖   6 ===== 4 |     ‖ | 2 - 5 ===== 6   ‖
+    |   ‖         ‖     ‖               ‖   |       ||       ‖   ‖         |     ‖               ‖   |       ||       |   ‖         ‖     ‖ |             ‖   ‖       ||       ‖   ‖         |     ‖ |             ‖   ‖
+    3 = 7 ------- 3     ‖ 2 ======= 3 - 7 = 3       ||       3 - 7 ======= 3     ‖ 2 ======= 3 - 7 = 3       ||       3 = 7 ------- 3     ‖ 2 ------- 3 = 7 - 3       ||       3 - 7 ======= 3     ‖ 2 ------- 3 = 7 - 3
+        ‖               ‖               ‖           ||           ‖               ‖               ‖           ||           ‖               ‖               ‖           ||           ‖               ‖               ‖    
+    2 = 8 ============= 6 ============= 8 = 2       ||       2 = 8 ============= 6 ============= 8 = 2       ||       2 = 8 ============= 6 ============= 8 = 2       ||       2 = 8 ============= 6 ============= 8 = 2
+        ‖                               ‖           ||           ‖                               ‖           ||           ‖                               ‖           ||           ‖                               ‖    
+        2                               2           ||           2                               2           ||           2                               2           ||           2                               2    
 
 ## Excel
 
