@@ -26,7 +26,7 @@ knowing are:
                 ‖                         ‖    
             3 = 7 ------------- 3         ‖    
             |   ‖               ‖         ‖    
-            |   6 === 4 = 2     ‖         ‖    
+            F = 8 === 4 = 2     ‖         ‖    
             |   ‖               ‖         ‖    
             3 = 7 - 2 ----- 1   ‖         ‖    
                 ‖               2         ‖    
@@ -34,7 +34,7 @@ knowing are:
                 ‖     |   2         2 |   ‖    
             3 - 7 = 2 | 1 ‖ 2 = 4   ‖ 3 = 7 - 3
             ‖   ‖     | | ‖     ‖   ‖     ‖   ‖
-            ‖   6 === 3 | 4 === 8 = 7 === 6   ‖
+            T = 8 === 3 | 4 === 8 = 7 === 8 = T
             ‖   ‖       |       ‖   |     ‖   ‖
             3 - 7 = 3 - 2       2   3 === 7 - 3
                 ‖                         ‖    
@@ -94,7 +94,7 @@ knowing are:
     analyze(N:int, Return:bool) :
         This command times every gate in the 'gates' dictionary (including 
         older versions of gates), and then plots the average solve times 
-        by the number of vertices, edges, and bridges in each puzzle. N 
+        by the number of vertices, edges, and bridges in each uzzle. N 
         is fed to timeGate(), and the data is returned when 'Return' is True.
         For example:
             
@@ -217,9 +217,37 @@ compliment - top*****       : (X, Cin) -> (X')
 import os
 import numpy as np
 import time
-from collections import OrderedDict
+from collections import OrderedDict, deque
 import matplotlib.pyplot as plt
-from scipy.optimize import curve_fit
+from matplotlib.textpath import TextPath
+from matplotlib.patches import PathPatch
+import tkinter as tk
+import IDX
+
+#Parameters for Drawing the Puzzles
+class drawing_parameters:
+    #Set the Circle Radius
+    R = 0.45
+    
+    #Set the Double-Line Half Spacing
+    H = 0.07
+    
+    #Compute the Endpoint Offset for Double Lines
+    W = np.sqrt(R**2 - H**2) + 0.001
+    
+    #Set Line Style Parameters
+    linecolor = 'black'         #Line Color
+    linewidth = 1               #Line Width (Relative to the Default)
+    
+    #Set the Font Attributes
+    fontsize = 0.5              #Font Size (Relative to the Gridsize?)
+    textoffset = 0.15           #Text Offset (for Centering Text in Circles)
+    text_linewidth = 0.05       #Text Linewidth
+    textcolor = 'black'         #Text Color
+    
+    #Set the Figure Size
+    root = tk.Tk() #This Allows the Figsize to be Based on the Screen Size
+    figsize = (root.winfo_screenwidth()/100, root.winfo_screenheight()/100)
 
 #Round a Number to a Specific Number of Sig Figs
 def sfRound(x, sf):
@@ -576,6 +604,34 @@ class Vertex:
         
         #Return that No Bridges Were Made
         return 0
+    
+    #Draw the Vertex on a Matplotlib Figure
+    def draw(self, figure, axes, Y):
+        #Get the Drawing Pareters (For Convenience)
+        R = drawing_parameters.R
+        fontsize = drawing_parameters.fontsize
+        offset = drawing_parameters.textoffset
+        linecolor = drawing_parameters.linecolor
+        linewidth = drawing_parameters.linewidth
+        textwidth = drawing_parameters.text_linewidth
+        textcolor = drawing_parameters.textcolor
+        
+        #Get the Position of the Vertex
+        y, x = self.position
+        
+        #Add the Circle
+        axes.add_artist(plt.Circle((x, Y - y), 
+                                   R, 
+                                   fill = False,
+                                   color = linecolor,
+                                   linewidth = linewidth))
+        
+        #Add the Text (As a Path)
+        axes.add_patch(PathPatch(TextPath((x - offset, Y - y - offset),
+                                          str(self.face),
+                                          size = fontsize),
+                                          color = textcolor,
+                                          linewidth = textwidth))
 
 #A Class for the Edges
 class Edge:
@@ -652,7 +708,6 @@ class Edge:
     def reset(self) -> None:
         """Reset the Edge to its Initial State"""
         self.bridges = 0
-        self.blocks = 0
         self.fixed = False
     
     #Shallow Copy the Edge
@@ -747,6 +802,68 @@ class Edge:
         if not self.bridges:
             for edge in self.intersections:
                 edge.bridges += 1
+    
+    #Draw the Edge on a Matplotlib Figure
+    def draw(self, figure, axes, Y):
+        #Get the Drawing Parameters (For Convenience)
+        R = drawing_parameters.R
+        W = drawing_parameters.W
+        H = drawing_parameters.H
+        linecolor = drawing_parameters.linecolor
+        linewidth = drawing_parameters.linewidth
+        
+        #Check the Value of the Edge
+        if self.bridges == 1:
+            #Check the Orientation
+            if self.orientation:
+                #Adjust the X Positions Because it's Horizontal
+                x1 = self.A.position[1] + R
+                x2 = self.B.position[1] - R
+                
+                #Set the Y Positions
+                y1 = Y - self.A.position[0]
+                y2 = Y - self.B.position[0]
+            else:
+                #Set the X Positions
+                x1 = self.A.position[1]
+                x2 = self.B.position[1]
+                
+                #Adjust the Y Positions Because it's Vertical
+                y1 = Y - self.A.position[0] - R
+                y2 = Y - self.B.position[0] + R
+            
+            #Plot the Edge
+            plt.plot((x1, x2), (y1, y2), color = linecolor, linewidth = linewidth)
+        elif self.bridges == 2:
+            #Check the Orientation
+            if self.orientation:
+                #Compute the X Positions
+                x1 = self.A.position[1] + W
+                x2 = self.B.position[1] - W
+                x3 = self.A.position[1] + W
+                x4 = self.B.position[1] - W
+                
+                #Compute the Y Positions
+                y1 = Y - self.A.position[0] - H
+                y2 = Y - self.B.position[0] - H
+                y3 = Y - self.A.position[0] + H
+                y4 = Y - self.B.position[0] + H
+            else:
+                #Compute the X Positions
+                x1 = self.A.position[1] + H
+                x2 = self.B.position[1] + H
+                x3 = self.A.position[1] - H
+                x4 = self.B.position[1] - H
+                
+                #Compute the Y Positions
+                y1 = Y - self.A.position[0] - W
+                y2 = Y - self.B.position[0] + W
+                y3 = Y - self.A.position[0] - W
+                y4 = Y - self.B.position[0] + W
+            
+            #Plot the Edges
+            plt.plot((x1, x2), (y1, y2), color = linecolor, linewidth = linewidth)
+            plt.plot((x3, x4), (y3, y4), color = linecolor, linewidth = linewidth)
 
 #A Class for the Puzzle
 class Hashiwokakero:
@@ -846,7 +963,6 @@ class Hashiwokakero:
         self.shape = self.grid.shape #The Shape of the Puzzle
         self.size = None
         self.type = 0 #What Sorts of Inputs/Outputs the Puzzle Uses
-        self.logic = None #The Logic Levels Associated with the Type of Inputs/Outputs
         self.vertices = [] #A List of the Vertices in the Puzzle
         self.edges = [] #A List of the Edges which Connect the Vertices
         self.queue = OrderedDict() #A Queue of Vertex Indices for Solving the Puzzle
@@ -889,10 +1005,10 @@ class Hashiwokakero:
                         #Record if it's an Input or an Output
                         if vertex.value == 9:
                             #Record the Input
-                            self.inputs.append(vertex)
+                            self.inputs.append((1, vertex))
                         elif vertex.value == 10:
                             #Record the Output
-                            self.outputs.append(vertex)
+                            self.outputs.append((1, vertex))
                         else:
                             #Update the Sum
                             self.sum += vertex.value
@@ -944,97 +1060,49 @@ class Hashiwokakero:
                         last = vertex
                         columns[j] = vertex
                     elif square == 11:
-                        #Update the Puzzle's Type
-                        self.type = 3
-                        
                         #Save the Position of the Input
-                        self.inputs.append((i, j))
+                        self.inputs.append((2, (i, j)))
                     elif square == 12:
-                        #Update the Puzzle's Type
-                        self.type = 3
-                        
                         #Save the Position of the Output
-                        self.outputs.append((i, j))
+                        self.outputs.append((2, (i, j)))
         
         #Save the Sum
         self.SUM = self.sum
         
-        #Determine the Input/Output Type
-        if self.inputs:
-            #Check the Type
-            if self.type == 3:
-                #Replace the Inputs With Their Edges
-                for index, (i, j) in enumerate(self.inputs):
-                    #Check if it's Vertical or Horizontal
+        #Initialize the Inputs/Outputs
+        for l, name in [(self.inputs, 'input'), (self.outputs, 'output')]:
+            for index, (key, obj) in enumerate(l):
+                #Update the Overal Puzzle Type
+                self.type |= key
+                
+                #Check the Intput/Output Type
+                if key == 1:
+                    pass
+                elif key == 2:
+                    #Get the Position
+                    i, j = obj
+                    
+                    #Check if the Edge is Vertical or Horizontal
                     if vertical[i, j] > -1:
                         #Check for a Conflict
                         if edgemap[i, j] > -1:
                             #Raise a Value Error
-                            raise ValueError('Conflicting input edges at ' + str((i, j)))
+                            raise ValueError('Conflicting %s edges at %s' % (name, str((i, j))))
                         else:
-                            #Update the Input
-                            self.inputs[index] = self.edges[vertical[i, j]]
+                            #Update the Input/Output
+                            l[index] = (2, self.edges[vertical[i, j]])
                     elif edgemap[i, j] > -1:
-                        #Update the Input
-                        self.inputs[index] = self.edges[edgemap[i, j]]
+                        #Update the Input/Output
+                        l[index] = (2, self.edges[edgemap[i, j]])
                     else:
                         #Raise a Value Error
-                        raise ValueError('Disconnected input at ' + str((i, j)))
-                
-                #Replace the Outputs With Their Edges
-                for index, (i, j) in enumerate(self.outputs):
-                    #Check if it's Vertical or Horizontal
-                    if vertical[i, j] > -1:
-                        #Check for a Conflict
-                        if edgemap[i, j] > -1:
-                            #Raise a Value Error
-                            raise ValueError('Conflicting output edges at ' + str((i, j)))
-                        else:
-                            #Update the Output
-                            self.outputs[index] = self.edges[vertical[i, j]]
-                    elif edgemap[i, j] > -1:
-                        #Update the Output
-                        self.outputs[index] = self.edges[edgemap[i, j]]
-                    else:
-                        #Raise a Value Error
-                        raise ValueError('Disconnected output at ' + str((i, j)))
-                
-                #Save the Logic Levels
-                self.logic = (1, 2)
-            else:
-                #Look at Each Input/Output to Check for Consistency
-                types = []
-                for vertex in self.inputs + self.outputs:
-                    #Count the Number of Edges Which Lead to 3's
-                    count = 0
-                    for edge in vertex.edges:
-                        count += edge.A.face == 3 or edge.B.face == 3
-                    
-                    #Check the Count
-                    if count == 0:
-                        types.append(1)
-                    elif count == 2:
-                        types.append(2)
-                    else:
-                        raise ValueError('Unrecognized input style at: %s' % str(vertex.position))
-                
-                #Check for Consistency
-                if all(x == types[0] for x in types):
-                    #Set the Type
-                    self.type = 1 if types[0] == 1 else 2
-                    
-                    #Set the Logic Levels
-                    self.logic = [(1, 2), (4, 6)][self.type - 1]
-                else:
-                    #Flad the Inconsistency
-                    raise ValueError('Inconsistent input styles detected')
+                        raise ValueError('Disconnected %s at %s' % (name, str((i, j))))
         
         #Save the Size of the Puzzle
-        b = int(round((self.sum + (len(self.inputs) + len(self.outputs))*[0, 1.5, 5, 0][self.type])/2))
-        self.size = (len(self.vertices), len(self.edges), b)
+        self.size = (len(self.vertices), len(self.edges), self.sum//2)
     
-    #Print the Puzzle
-    def __repr__(self) -> None:
+    #Prepare the Puzzle for Printing
+    def __str__(self) -> None:
         """Create an ASCII Representation of the Puzzle"""
         #Make a Grid
         grid = np.full(self.shape, ' ', str)
@@ -1091,18 +1159,20 @@ class Hashiwokakero:
             edge.reset()
         
         #Reset the Inputs
-        for vertex in self.inputs:
-            vertex.face = 9
-            vertex.value = 9
+        for key, vertex in self.inputs:
+            value = [-1, 9, 11][key]
+            vertex.face = value
+            vertex.value = value
         
         #Reset the Outputs
-        for vertex in self.outputs:
-            vertex.face = 10
-            vertex.value = 10
+        for key, vertex in self.outputs:
+            value = [-1, 10, 12][key]
+            vertex.face = value
+            vertex.value = value
         
         #Reset the Queue
         self.queue = OrderedDict()
-        for i in range(len(self.vertices)):
+        for i, vertex in enumerate(self.vertices):
             #Record the Index
             self.queue[i] = -1
             self.backup[i] = -1
@@ -1175,26 +1245,34 @@ class Hashiwokakero:
         if len(inputs) != len(self.inputs):
             raise ValueError('this puzzle expected %d inputs. %d inputs were provided.' % (len(self.inputs), len(inputs)))
         
-        #Check the Type of the Puzzle
-        if 0 < self.type < 3:
-            #Write the Inputs
-            for vertex, value in zip(self.inputs, map(int, inputs)):
+        #Write Each Input
+        for (key, obj), value in zip(self.inputs, map(int, inputs)):
+            #Check the Input Type
+            if key == 1:
                 #Mark the Truth Value
-                vertex.face = ['F','T'][value]
+                obj.face = ['F','T'][value]
                 
-                #Mark the Number of Bridges Needed
-                vertex.value = self.logic[value]
-        elif self.type == 3:
-            #Write the Inputs
-            for edge, value in zip(self.inputs, map(int, inputs)):
-                #Build the Appropriate Number of Bridges
-                edge.build(self.logic[value])
+                #Set the Number of Bridges Needed
+                obj.value = value + 1
+            elif key == 2:
+                #Build the Specified Number of Bridges
+                obj.build(value + 1)
                 
                 #Record the Move
-                self.moves.append((0, edge, edge.value))
+                self.moves.append((0, obj, obj.value))
                 
                 #Mark the Edge as an Active Input
-                edge.fixed = True
+                obj.fixed = True
+    
+    #Read a Single Output
+    def readOutput(key:int, obj) -> str:
+        #Check the Key
+        if key == 1:
+            #Return the Output
+            return '1' if obj.face == 'T' else '0'
+        else:
+            #Return the Output
+            return str(obj.bridges - 1)
     
     #Read the Outputs of a Puzzle
     def readOutputs(self) -> str:
@@ -1208,16 +1286,13 @@ class Hashiwokakero:
         
         """
         
-        #Check the Type of the Puzzle
+        #Check if There are Outputs
         if self.type == 0:
-            #There Are No Outputs
+            #There are No Outputs
             return None
-        elif self.type < 3:
-            #Get/Return the Outputs
-            return ''.join('1' if vertex.face == 'T' else ('0' if vertex.face == 'F' else 'X') for vertex in self.outputs)
-        elif self.type == 3:
-            #Get/Return the Outputs
-            return ''.join(str(edge.bridges - 1) for edge in self.outputs)
+        else:
+            #Build the Output String
+            return ''.join(Hashiwokakero.readOutput(key, obj) for key, obj in self.outputs)
     
     #Undo the Last Bridge Played
     def undo(self):
@@ -1387,7 +1462,7 @@ class Hashiwokakero:
             return maxDepth
     
     #Solve the Puzzle
-    def solve(self, inputs:str = '', show:bool = False, prints:bool = False) -> str:
+    def solve(self, inputs:str = '', show:bool = False, prints:bool = False, render:bool = False) -> str:
         """
         Solve the Hashiwokakero Puzzle/Circuit
         
@@ -1409,6 +1484,10 @@ class Hashiwokakero:
             solve detailing if the puzzle was solved, and what 
             the maximum recursion depth of the solver was. 
             The default is False.
+        render : bool, optional
+            When True, the puzzle will be rendered using matplotlib, 
+            and the figure created will be returned in addition to 
+            the standard output.
         
         Returns
         -------
@@ -1432,7 +1511,7 @@ class Hashiwokakero:
         depth = self.solver()
         
         #Read the Outputs
-        outputs = self.readOutputs() if not self.error else 'error'
+        outputs = (self.readOutputs() if not self.error else 'error') if self.solved else 'X'
         
         #Print the Result
         if prints:
@@ -1449,49 +1528,264 @@ class Hashiwokakero:
             print('')
             print(self, end = '\n\n')
         
-        #Return the Outputs
-        return outputs
+        #Return the Outputs (Rendering the Puzzle if Requested)
+        return (outputs, self.render()) if render else outputs
     
     #Save a Gate as a .csv File
-    def save(self, filename:str) -> None:
+    def save(self, filename:str, filetype:str = 'idx', byteorder:str = '@') -> None:
         '''
-        Save the puzzle as a csv file.
+        Save the puzzle as a csv file or an idx file.
         
         Parameters
         ----------
         filename : str
             The name you want to save the file as. You can include a 
             file path (assuming it's a valid destination), but you 
-            shouldn't include a suffix (all files are saved as .csv 
-            files, so anything after the first period you include 
-            in your filename will be ignored).
+            shouldn't include a suffix since that is selected using 
+            the 'filetype' input.
+        filetype : str
+            How you would like to save the puzzle. When 'idx', the 
+            puzzle will be saved as a .idx file (currently without 
+            compression). When 'csv', the puzzle grid will be 
+            saved as a .csv file. (See IDX.py for notes on the IDX 
+            file format)
+        byteorder: str ('@', '=', '<', '>'), optional
+            The byteorder to use when saving the data as an idx file.
+                @ : Native
+                = : Native (Standardized)
+                < : Little-Endian
+                > : Big-Endian
+                ! : Network (Big-Endian)
+            The default is '@'
         
         '''
         
-        #Make the Grid
-        grid = [['']*self.shape[1] for i in range(self.shape[0])]
-        for vertex in self.vertices:
-            grid[vertex.position[0]][vertex.position[1]] = str(vertex.face)
-        
-        #Make Sure the Inputs are Correct
-        for vertex in self.inputs:
-            grid[vertex.position[0]][vertex.position[1]] = '9'
-        
-        #Make Sure the Outputs are Correct
-        for vertex in self.outputs:
-            grid[vertex.position[0]][vertex.position[1]] = '10'
-        
-        #Open the File
-        file = open(os.getcwd() + '\\' + filename.split('.')[0] + '.csv', 'w')
-        
-        #Write the File
-        file.write('\n'.join(','.join(row) for row in grid))
-        
-        #Close the File
-        file.close()
+        #Check the File Type
+        filetype = str(filetype).lower()
+        if filetype == 'idx':
+            #Initialize the Grid
+            grid = np.zeros(self.grid.shape, np.byte)
+            
+            #Add the Vertices
+            for vertex in self.vertices:
+                grid[vertex.position] = np.byte(vertex.face)
+            
+            #Check the Input/Output Type
+            if self.type&2:
+                #Add the Inputs/Outputs
+                for value, lst in enumerate((self.inputs, self.outputs), start = 11):
+                    for key, edge in lst:
+                        #Check the Key
+                        if key == 2:
+                            #Get the Positions
+                            i1, j1 = edge.A.position
+                            i2, j2 = edge.B.position
+                            
+                            #Mark the Input/Output
+                            grid[(i1 + i2)//2][(j1 + j2)//2] = value
+            
+            #Save the Grid
+            IDX.write(grid, filename)
+        elif filetype == 'csv':
+            #Open the File
+            file = open(os.getcwd() + '\\' + filename.split('.')[0] + '.csv', 'w')
+            
+            #Write the File Using the Grid that Generated the Puzzle
+            file.write('\n'.join(','.join(map(str, row)) for row in self.grid))
+            
+            #Close the File
+            file.close()
+        else:
+            raise ValueError("Unrecognized filetype: '%s'" % filetype)
     
-    #Render as Puzzle as a JPEG in its Current State
-    def render(self, reset:bool = False):
+    #Load a Gate From a File
+    def load(filename:str, byteorder:str = '@'):
+        '''
+        Load a Puzzle From file.
+        
+        Parameters
+        ----------
+        filename : str
+            The name of the file you want to load. You can include a 
+            file path (assuming it's a valid destination), and you 
+            must include the suffix. Valid suffixes are '.csv' and 
+            '.idx' (See IDX.py for details on the idx file format).
+        byteorder: str ('@', '=', '<', '>'), optional
+            The byteorder to use when reading the data from an idx file.
+                @ : Native
+                = : Native (Standardized)
+                < : Little-Endian
+                > : Big-Endian
+                ! : Network (Big-Endian)
+            The default is '@'
+        
+        '''
+        
+        #Get the Suffix
+        suffix = filename.split('\\')[-1].split('.')[-1]
+        
+        #Check the Suffix
+        if suffix == 'idx':
+            #Make/Return the Puzzle
+            return Hashiwokakero(IDX.read(filename))
+        elif suffix == 'csv':
+            #Make/Return the Puzzle
+            return Hashiwokakero(np.loadtxt(filename, str, None, ','))
+    
+    #Generate a Hashiwokakero Puzzle
+    def generate(shape:tuple = (10, 15)):
+        #Initialize 2 Grids
+        grid = np.zeros(shape, int)
+        bridges = np.zeros(shape, int)
+        
+        #Split the Shape
+        M, N = shape
+        
+        #Compute the Reduced Shame
+        m = M - 3
+        n = N - 3
+        
+        #Initialize a Vertex Queue
+        queue = deque([(np.random.randint(M), np.random.randint(N))])
+        
+        #Check if a Vertex Can Be Added to a Location
+        def can_add(i:int, j:int) -> bool:
+            #Look for Neighboring Vertices
+            if i > 0 and grid[i - 1][j]:
+                #There's a Node Above the Test Location
+                return False
+            elif j > 0 and grid[i][j - 1]:
+                #There's a Node to the Left of the Test Location
+                return False
+            elif i <= m and grid[i + 1][j]:
+                #There's a Node Below the Test Location
+                return False
+            elif j <= n and grid[i][j + 1]:
+                #There's a Node to the Right of the Test Location
+                return False
+            else:
+                #The Space is Free
+                return True
+        
+        #Backtrack Along an Edge
+        def backtrack(i:int, j:int, y:int, x:int, dx:int, dy:int):
+            while i != y and j != x:
+                #Move Backwards
+                i -= dy
+                j -= dx
+                
+                #Delete the Bridge
+                bridges[i][j] = 0
+        
+        #Update the Value of the Vertices at the Ends of an Edge
+        def update_values(i:int, j:int, y:int, x:int, b:int):
+            #Update the Values
+            grid[i][j] += b
+            grid[y][x] += b
+        
+        #Add a Vertex and Update the Values
+        def add_vertex(i:int, j:int, y:int, x:int, b:int):
+            #Add the Vertex to the Queue
+            queue.append((i, j))
+            
+            #Update the Values
+            update_values(i, j, y, x, b)
+        
+        #Add Bridges
+        def add_bridges(y:int, x:int, dx:int, dy:int) -> int:
+            #Choose the Number of Bridges
+            b = np.random.randint(3)
+            
+            #Decide if Bridges Will be Added
+            if True:
+                #Choose the Number of Bridges
+                b = np.random.randint(1, 3)
+                
+                #Get the Next Position
+                i = y + dy
+                j = x + dx
+                
+                #Mark the Bridge
+                bridges[i][j] = b
+                
+                #Extend the Bridge
+                i += dy
+                j += dx
+                last = None
+                while 0 < i <= m and 0 < j <= n and grid[i][j] == 0:
+                    #Check if a Vertex Can be Added at (i, j)
+                    if can_add(i, j):
+                        #Update the Last Location
+                        last = (i, j)
+                        
+                        #Determine if the Bridge Should End
+                        if np.random.randint(2):
+                            break
+                    
+                    #Mark the Bridge
+                    bridges[i][j] = b
+                    
+                    #Move
+                    i += dy
+                    j += dx
+                
+                #Check the Case
+                if -1 < i < M and -1 < j < N and grid[i][j]:
+                    #Update the Vertices' Values
+                    update_values(i, j, y, x, b)
+                    
+                    #Return that no Vertices Were Added
+                    return 0
+                elif -1 < i < M and -1 < j < N and can_add(i, j):
+                    #Add the Verte
+                    add_vertex(i, j, y, x, b)
+                    
+                    #Return that a Vertex was Added
+                    return 1
+                elif last:
+                    #Backtrack
+                    backtrack(i, j, y, x, dx, dy)
+                    
+                    #Add the Verte
+                    add_vertex(i, j, y, x, b)
+                    
+                    #Return that a Vertex was Added
+                    return 1
+                else:
+                    #Backtrack
+                    backtrack(i, j, y, x, dx, dy)
+                    
+                    #Return that no Vertices Were Added
+                    return 0
+            else:
+                #Return that no Vertices Were Added
+                return 0
+        
+        #Add Vertices to the Puzzle
+        vertices = 1
+        while queue:
+            #Get the Next Node
+            y, x = queue.popleft()
+            
+            #Add Bridges in Each Direction (Up, Right, Down Left)
+            if 1 < y and 0 == grid[y - 1][x] == bridges[y - 1][x]:
+                #Add Bridges Randomly
+                vertices += add_bridges(y, x, -1, 0)
+            if x < n and 0 == grid[y][x + 1] == bridges[y][x + 1]:
+                #Add Bridges Randomly
+                vertices += add_bridges(y, x, 0, 1)
+            if y < m and 0 == grid[y + 1][x] == bridges[y + 1][x]:
+                #Add Bridges Randomly
+                vertices += add_bridges(y, x, 1, 0)
+            if 1 < x and 0 == grid[y][x - 1] == bridges[y][x - 1]:
+                #Add Bridges Randomly
+                vertices += add_bridges(y, x, 0, -1)
+        
+        #Check the Number of Nodes and Either Try Again or Make/Return the Puzzle Object
+        return Hashiwokakero.generate(shape) if vertices == 1 else Hashiwokakero(grid)
+    
+    #Render as Puzzle as a Matplotlib Figure in its Current State
+    def render(self, show:bool = True, reset:bool = False, figure = None, axes = None):
         """
         #Render the Puzzle as a JPEG
         
@@ -1504,10 +1798,45 @@ class Hashiwokakero:
         
         Returns
         -------
-        None.
+        matplotlib.figure.Figure : 
+            The rendered puzzle as a matplotlib figure.
 
         """
-        raise NotImplementedError()
+        
+        #Reset the Puzzle
+        if bool(reset):
+            self.reset()
+        
+        #Get the Y-Inversion
+        Y = self.shape[0] - 1
+        
+        #Initialize a Figure
+        if figure is None or axes is None:
+            figure, axes = plt.subplots(figsize = drawing_parameters.figsize)
+        plt.xlim((-1, self.shape[1]))
+        plt.ylim((-1, self.shape[0]))
+        axes.axis('off')
+        axes.set_aspect(1)
+        plt.grid(False)
+        
+        #Make the Plot Fullscreen - THIS BREAKS THE TOOLBAR FOR SOME REASON
+        #plt.get_current_fig_manager().full_screen_toggle()
+        
+        #Add the Vertices to the Plot
+        for vertex in self.vertices:
+            vertex.draw(figure, axes, Y)
+        
+        #Add the Edges to the Plot
+        if self.moves:
+            for edge in self.edges:
+                edge.draw(figure, axes, Y)
+        
+        #Show the Plot
+        if bool(show):
+            plt.show()
+        
+        #Return the Firgure
+        return figure
 
 #Load a Gate from a Filename
 def load(name):
@@ -1526,12 +1855,12 @@ def load(name):
         for folder in ['2-Channel','1-Channel']:
             if name in os.listdir(folder):
                 #Make/Return the Puzzle
-                return Hashiwokakero(np.loadtxt('\\'.join([folder, name]), str, None, ','))
+                return Hashiwokakero.load('\\'.join([folder, name]))
     else:
         #Make Sure the File is Where it Says it is
         if name in os.listdir(path):
             #Make/Return the Puzzle
-            return Hashiwokakero(np.loadtxt('\\'.join([path, name]), str, None, ','))
+            return Hashiwokakero.load('\\'.join([path, name]))
     
     #Raise an Exception
     if len(path) > 0:
@@ -1539,71 +1868,53 @@ def load(name):
     raise OSError(''.join([path, name, ' not found.']))
 
 #Recursively Search a Folder Tree
-def search(target, case:bool = False, root:str = None, hits:None = None):
+def search(target:str, root:str = None, case:bool = False, recurse:bool = True) -> str:
     """Search a Folder Tree for a Target
     
     Parameters
     ----------
     target : str
         The item you're searching for.
+    root : str, optional
+        The root folder you want to search. 
+        The default is None (current working directory).
     case : bool, optional
         Whether or not the search should be case sensitive. 
         The default is False.
-    root : str, optional
-        The root folder. 
-        The default is None (current working directory).
-    hits : None, optional
-        This is necessary to make the search work, I recommend that you
-        don't tamper with it. 
-        The default is None.
+    recurse : bool, optional
+        When True, sub-folders will be searched for matches as well, 
+        when False only the root folder will be searched for matches.
+        The default is True
     
-    Returns
+    Yields
     -------
-    hits : list
-        A list of all the found matches.
-    
-    Notes
-    -----
-    Setting 'hits' to anything other than a list will have 'hits' immediately
-    replaced by an empty list. This new empty list will then be filled with 
-    the matches this function finds. If you instead pass a list for 'hits', 
-    the matches this function finds will be appended to the list you passed.
-    This typically won't break anything, but you could end up having to dig 
-    through a much larger list than would otherwise be necessary.
+    filename : str
+        Each file name which matches the target found in the specified folder tree.
     
     """
     
-    #Inialize the Hits
-    if type(hits) != list:
-        hits = []
-    
-    #Get the Directory
-    if root is None:
-        directory = os.listdir()
-        path = ''
-    elif type(root) == str:
-        directory = os.listdir(root)
-        path = root
-    
     #Search the Folder
-    for file in directory:
+    folders = []
+    for file in os.listdir(root):
         #Make the Filename
-        if len(path) > 0:
-            filename = '\\'.join([path, file])
-        else:
-            filename = file
+        filename = file if root is None else '\\'.join([root, file])
         
-        #Check the File
+        #Check if the File Matches the Target
         if (case == False and target.lower() in file.lower()) or target in file:
-            hits.append(filename)
+            #Yield the Hit
+            yield filename
         
         #Check if the File is a Folder
-        if '.' not in file:
-            #Recurse
-            hits = search(target, case, filename, hits)
+        if recurse and '.' not in file:
+            #Record the Folder to Search
+            #doing the recursion later keeps the hits in a more sensical order
+            folders.append(filename)
     
-    #Return the Hits
-    return hits
+    #Recursively Search Sub-Folders
+    if recurse:
+        for path in folders:
+            #Recursively Search the Sub-Folder
+            yield from search(target, case, path, recurse)
     
 #Load the Gates
 def loadGates():
@@ -1622,18 +1933,15 @@ def loadGates():
 
     """
     
-    #Search the Folder Tree
-    hits = search('.csv', False, None, None)
-    
     #Initialize the Dictionary
     gates = {}
     
-    #Load the Files
-    for filename in hits:
+    #Load Any CSV Files Found in the Folder Tree
+    for filename in search('.csv', False, None, None):
         #Split the Filename
         split = filename.split('\\')
         
-        #Try Block for Safety
+        #Try Block In Case the Puzzle Creation Fails
         try:
             #Initialize Sub-Dictionaries
             dictionary = gates
@@ -1879,7 +2187,7 @@ def analyze(N:int = 100, Return:bool = True):
         #Save the Data
         vertices.append(len(gate.vertices))
         edges.append(len(gate.edges))
-        bridges.append((gate.SUM + (len(gate.inputs) + len(gate.outputs))*sum(gate.logic)/2)/2)
+        bridges.append(gate.SUM//2)
         ubridges.append((len(gate.inputs) + len(gate.outputs))*gate.type/2)
         times.append(np.mean(data))
         utimes.append(np.std(data, ddof = 1))
@@ -1966,3 +2274,88 @@ def subtract(x:int, y:int) -> int:
     else:
         #Return the 2's Compliment of the Current Number (Since it's Negative)
         return -int(gates[2]['8b compliment'].solve(z[1:]), 2)
+
+#Show All Configurations for a 2 Input Gate
+def panel(gate):
+    #Fetch the Gate
+    gate = fetch(gate)
+    
+    #Initialize the Figure
+    fig, axes = plt.subplots(2, 2, figsize = drawing_parameters.figsize)
+    
+    #Solve All Input Combinations
+    for x in range(2):
+        for y in range(2):
+            #Solve the Gate
+            z = gate.solve(str(x) + str(y))
+            
+            #Select the Subplot
+            plt.subplot(axes[x][y])
+            
+            #Render the Gate
+            gate.render(False, False, fig, axes[x][y])
+            axes[x][y].set_title('%d%d → %s' % (x, y, z))
+    
+    #Adjust the Layout
+    fig.tight_layout(w_pad = 0)
+    
+    #Show the Panel
+    fig.show()
+    
+    #Return the Figure
+    return fig
+
+#Test to See How Well Buffered a Gate Is
+def test_buffering(gate:str):
+    #Get the Gate
+    gate = fetch(gate)
+    
+    #Copy the Grid
+    grid = gate.grid.copy()
+    
+    #Edit the Inputs
+    for key, edge in gate.inputs:
+        #Update the Endpoints
+        grid[edge.A.position] = '9'
+        grid[edge.B.position] = '9'
+        
+        #Find the 11 in the Grid
+        i, j = edge.A.position
+        di, dj = [(1, 0), (0, 1)][edge.orientation]
+        while grid[i, j] != '11':
+            i += di
+            j += dj
+        
+        #Replace the 11 With a 2
+        grid[i, j] = '2'
+        
+        #Edit the Cage
+        grid[i + 2*dj, j + 2*di] = str(int(grid[i + 2*dj, j + 2*di]) + 2)
+    
+    #Edit the Outputs
+    for key, edge in gate.outputs:
+        #Update the Endpoints
+        grid[edge.A.position] = '10'
+        grid[edge.B.position] = '10'
+
+        #Find the 12 in the Grid
+        i, j = edge.A.position
+        di, dj = [(1, 0), (0, 1)][edge.orientation]
+        while grid[i, j] != '12':
+            i += di
+            j += dj
+
+        #Replace the 12 With a 2
+        grid[i, j] = '2'
+
+        #Edit the Cage
+        grid[i - 2*dj, j - 2*di] = str(int(grid[i - 2*dj, j - 2*di]) + 2)
+    
+    #Make the New Gate
+    gate = Hashiwokakero(grid)
+    
+    #Try All Possible Input Combinations
+    truthTable(gate)
+    
+    #Return the Gate
+    return gate
