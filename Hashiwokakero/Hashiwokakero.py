@@ -1914,7 +1914,7 @@ def search(target:str, root:str = None, case:bool = False, recurse:bool = True) 
     if recurse:
         for path in folders:
             #Recursively Search the Sub-Folder
-            yield from search(target, case, path, recurse)
+            yield from search(target, path, case, recurse)
     
 #Load the Gates
 def loadGates():
@@ -1937,11 +1937,11 @@ def loadGates():
     gates = {}
     
     #Load Any CSV Files Found in the Folder Tree
-    for filename in search('.csv', False, None, None):
+    for filename in search('.csv', None, False):
         #Split the Filename
         split = filename.split('\\')
         
-        #Try Block In Case the Puzzle Creation Fails
+        #Try Block for Safety
         try:
             #Initialize Sub-Dictionaries
             dictionary = gates
