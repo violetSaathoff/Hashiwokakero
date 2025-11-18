@@ -18,7 +18,7 @@ Data is encoded as edges which have either a single bridge (false) or a double b
 
 The left panels are the circuits with forced bridges solved, but arbitrary inputs/outputs. The middle panels are the circuits solved when the input is false. The right panels are the circuits solved when the input is true.
 
-Inputs and outputs are achieved by specifying particular edges as either inputs or outputs. Since each edge has 2 ends, this will always generate 2 copies of each input (and means that each output needs to be calculated twice. In my circuits I position my inputs along the left of the puzzle and my outputs along the right. For example, here is a circuit with 1 input/output that is a unitary logic function (forced bridges are already added):
+Inputs and outputs are achieved by specifying particular edges as either inputs or outputs. Since each edge has 2 ends, this will always generate 2 copies of each input (and means that each output needs to be calculated twice - which is actually useful for parity reasons). In my circuits I position my inputs along the left of the puzzle and my outputs along the right. For example, here is a circuit with 1 input/output that is a unitary logic function (forced bridges are already added):
 
         2       2           ||           2       2    
         ‖       ‖           ||           ‖       ‖    
@@ -36,11 +36,11 @@ Inputs and outputs are achieved by specifying particular edges as either inputs 
  
 The left panel is a trivial buffer, and the right panel is a NOT gate. Note that the 7's act as 3's since the 8's/6's force there to be 4 additional bridges connected to the 7 which don't transmit data, leaving 3 bridges which do connect to the 7 to transmit data. Also, the double-bridge structure is very useful because structures like it can be used to force the puzzle to be fully connected when it otherwise might not be, and it can be used to block communication between vertices which could otherwise talk to each other (an example of blocked communication is the 6's in the puzzle above, which block vertical communication between the 7's). Finally, it's worth noting that the output is effectively a data terminator (the ability to terminate data will be useful later).
 
-The most important building block for making logic gates is what I refer to as a "switch block", or an "if/else block". The basic idea behind this is to leverage the fact that bridges are not allowed to cross to create a structure that controls how data from one input flows based on the truth value of another input. To do this I convert the 2/1 logic levels to 0/1 logic levels using a 2. For example: 
+The most important building block for making logic gates is what I refer to as a "gate". The basic idea behind this is to leverage the fact that bridges are not allowed to cross to create a structure that controls how data from one input flows based on the truth value of another input. To do this I convert the 2/1 logic levels to 0/1 logic levels using a 2. For example: 
 
     I - 2   2 - O       ||       F - 2 - 2 - F       ||       T = 2   2 = T
 
-For the time being please ignore the fact that these puzzles are not fully connected (this will be fixed later with the cage structure). Note how the edge between the 2's allows vertical bridges to pass through it when the input is true, but not when the input is false. On it's own, this isn't particularly useful since the bridge which would have passed through the if gate still needs to connect somewhere. To get around this I added a NOT gate followed by a perpendicular if gate (note that since the logic levels are currently 0/1 instead of 2/1, a NOT gate is a 1 instead of a 3).
+For the time being please ignore the fact that these puzzles are not fully connected (this will be fixed later with the cage structure). Note how the edge between the 2's allows vertical bridges to pass through it when the input is true, but not when the input is false. On it's own, this isn't particularly useful since the bridge which would have passed through the if gate still needs to connect somewhere. To get around this I added a NOT gate followed by a perpendicular if gate (note that since the logic levels are currently 0/1 instead of 2/1, a NOT gate is a 1 instead of a 3). I refer to this structure as a "switch block" or an "if/else block"
 
     I - 2   1               ||       F - 2 - 1               ||       T = 2   1
           X                 ||             X                 ||             X |
@@ -63,7 +63,7 @@ Although I often use this as a building block within a larger puzzle, it can be 
         ‖           ‖           ||           ‖           ‖           ||           ‖           ‖    
     3 - 7 --------- 7 - 3       ||       3 = 7 --------- 7 = 3       ||       3 - 7 ========= 7 - 3
     |   ‖ 2 --- 3   ‖   |       ||       |   ‖ 2 --- 3   ‖   |       ||       ‖   ‖ 2 === 3   ‖   ‖
-    |   4       |   4   |       ||       |   4 |     ‖   4   |       ||       ‖   4       |   4   ‖
+    I   4       |   4   O       ||       F   4 |     ‖   4   F       ||       T   4       |   4   T
     |   ‖     2 |   ‖   |       ||       |   ‖ |   2 ‖   ‖   |       ||       ‖   ‖     2 |   ‖   ‖
     3 - 6   1 ‖ 3 - 7 - 3       ||       3 = 6 | 1 ‖ 3 - 7 = 3       ||       3 - 6 - 1 ‖ 3 = 7 - 3
         ‖     ‖     ‖           ||           ‖ | | ‖     ‖           ||           ‖     ‖     ‖    
@@ -71,7 +71,7 @@ Although I often use this as a building block within a larger puzzle, it can be 
         ‖           ‖           ||           ‖ | |       ‖           ||           ‖           ‖    
         ‖ 1         6 - 3       ||           ‖ 1 |       6 - 3       ||           ‖ 1 ------- 6 - 3
         ‖           ‖   |       ||           ‖   |       ‖   |       ||           ‖           ‖   ‖
-        ‖       2 = 6   |       ||           ‖   |   2 = 6   |       ||           ‖       2 = 6   ‖
+        ‖       2 = 6   O       ||           ‖   |   2 = 6   F       ||           ‖       2 = 6   T
         ‖           ‖   |       ||           ‖   |       ‖   |       ||           ‖           ‖   ‖
         ‖   2 ----- 7 - 3       ||           ‖   2 ----- 7 = 3       ||           ‖   2 ===== 7 - 3
         ‖           ‖           ||           ‖           ‖           ||           ‖           ‖    
@@ -87,8 +87,8 @@ The ability to split wires can also be used to create a non-trivial buffer, whic
         ‖     ‖           ||           ‖     ‖           ||           ‖     ‖    
         ‖ 2 - 7 - 3       ||           ‖ 2 - 7 = 3       ||           ‖ 2 = 7 - 3
     3 - 6   1 ‖   |       ||       3 = 6 | 1 ‖   |       ||       3 - 6 - 1 ‖   ‖
-    |   ‖     4   |       ||       |   ‖ | | 4   |       ||       ‖   ‖     4   ‖
-    |   4     ‖   |       ||       |   4 | | ‖   |       ||       ‖   4     ‖   ‖
+    |   ‖     4   O       ||       |   ‖ | | 4   F       ||       ‖   ‖     4   T
+    I   4     ‖   |       ||       F   4 | | ‖   |       ||       T   4     ‖   ‖
     |   ‖ 1   6 - 3       ||       |   ‖ 1 | 6 = 3       ||       ‖   ‖ 1 - 6 - 3
     3 - 7 - 2 ‖           ||       3 = 7 - 2 ‖           ||       3 - 7 = 2 ‖    
         ‖     ‖           ||           ‖     ‖           ||           ‖     ‖    
@@ -100,7 +100,7 @@ Since the input is terminated, the 2 halves of the input are foced be have the s
 
 Although this isn't actually necessary for Turing Competeness, the next circuit element I want to explain is the FAKE XOR. The Fake XOR is works by having a vertex that has 2 inputs (A, B) and 1 output (C). If the value on the vertex is V, then we can compute C using the equation: C = V - A - B. Notably, this equation preserves parity (which is why this gate is most akin to an xor gate). Unfortunately, for the resulting data to be a valid logic level we need there to be only 2 possible values of C. This means that at best there are 3 possible input combinations which satisfy the gate (this is why it's a FAKE XOR and not a real XOR). For example, if V = 5, then A and B can't simultaneously be 1 since then C would have to be 3, but that's illegal (other options work: 5 - 2 - 2 = 1, 5 - 2 - 1 = 2, 5 - 1 - 2 = 2). Alternatively, if V = 4, then A and B can't simultaneously be 2 since then C would have to be 0, which isn't a valid logic level in my 1/2 encoding scheme (other options work: 4 - 1 - 1 = 2, 4 - 1 - 2 = 1, 4 - 2 - 1 = 1). 
 
-Here is a FAKE XOR which uses a 4 (each panel is for a different input combination, and is fully solved when possible - note that because NOT gates are cheap I don't really care that this is actually a FAKE XNOR instead of a FAKE XOR):
+Here is a FAKE XNOR which uses a 4 (each panel is for a different input combination, and is fully solved when possible - note that because NOT gates are cheap I don't really care that this is actually a FAKE XNOR instead of a FAKE XOR):
 
     F           ||       F           ||       T           ||       T    
     |           ||       |           ||       ‖           ||       ‖    
